@@ -1,0 +1,84 @@
+{
+  "$schema": "https://devin.ai/schemas/config.json",
+  "project_name": "cics-modernization-net-devin",
+  "version": "1.0.0",
+  "description": "Enterprise CICS Mainframe (BMS/COBOL/DB2/VSAM) to Modern .NET 9 Web API & React UI Modernization Workbench for Devin IDE",
+  "default_branch": "main",
+  "environment": {
+    "os": "linux",
+    "init_script": "setup_devin_env.sh",
+    "runtimes": {
+      "dotnet": "9.0",
+      "node": "20.x",
+      "python": "3.11"
+    },
+    "env_vars": {
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_NOLOGO": "1",
+      "ASPNETCORE_ENVIRONMENT": "Development"
+    }
+  },
+  "playbooks_directory": ".devin/playbooks",
+  "agents_directory": ".devin/agents",
+  "pipeline": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Discovery",
+        "playbook": ".devin/playbooks/01-discovery.playbook.md",
+        "agent": "discovery-agent"
+      },
+      {
+        "phase": 2,
+        "name": "ReviewStage1",
+        "playbook": ".devin/playbooks/02-review-stage1.playbook.md",
+        "agent": "review-gate1",
+        "gate": "GATE 1"
+      },
+      {
+        "phase": 3,
+        "name": "MoveGroup",
+        "playbook": ".devin/playbooks/03-move-group.playbook.md",
+        "agent": "create-tran-group"
+      },
+      {
+        "phase": 4,
+        "name": "CreateBDDBSTS",
+        "playbook": ".devin/playbooks/04-create-bdd-bsts.playbook.md",
+        "agents": ["tran-group-bdd", "tran-group-bsts"]
+      },
+      {
+        "phase": 5,
+        "name": "CreateDB",
+        "playbook": ".devin/playbooks/05-create-db.playbook.md",
+        "agents": ["setup-db", "setup-vsam", "db-status-report"]
+      },
+      {
+        "phase": 6,
+        "name": "TargetBuild",
+        "playbook": ".devin/playbooks/06-target-build.playbook.md",
+        "agents": ["refactor-ui-spec", "refactor-backend-spec", "refactor-reconcile-spec"]
+      },
+      {
+        "phase": 7,
+        "name": "ReviewGate2",
+        "playbook": ".devin/playbooks/07-review-gate2.playbook.md",
+        "agent": "review-gate2",
+        "gate": "GATE 2"
+      },
+      {
+        "phase": 8,
+        "name": "TestTarget",
+        "playbook": ".devin/playbooks/08-test-target.playbook.md",
+        "agents": ["test-writer-refactor", "test-runner-refactor", "test-bug-fix"]
+      },
+      {
+        "phase": 9,
+        "name": "QualitySecurityReview",
+        "playbook": ".devin/playbooks/09-quality-security-review.playbook.md",
+        "agents": ["security-review", "code-quality-review", "quality-security-fix"],
+        "gate": "GATE 3"
+      }
+    ]
+  }
+}

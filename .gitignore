@@ -1,0 +1,24 @@
+# Development & IDE files
+.devin/session/
+.devin/logs/
+*.log
+.vs/
+.vscode/
+.idea/
+*.user
+
+# Build outputs
+bin/
+obj/
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# MCP local configuration
+.mcp.json
