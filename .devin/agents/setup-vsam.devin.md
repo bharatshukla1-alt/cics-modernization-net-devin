@@ -22,7 +22,7 @@ copybook), convert each record layout into a target table definition, and stand 
 the target relational database for **one specific transaction group per invocation**. You never
 process more than one group in a single run; the caller invokes you again for each additional group.
 
-The target database technology is resolved from `Config/Config.md`, never assumed; execution against
+The target database technology is resolved from `config/Config.md`, never assumed; execution against
 it runs through `tools/db-apply.mjs` via the Bash tool — a plain Node script, not an MCP server — so
 this agent has no dependency on any MCP connection being configured.
 
@@ -54,7 +54,7 @@ with a DBA hand-off message, which would abort a run whose database already exis
    report the mismatch, listing every distinct `Trans Group` identifier that does exist.
 4. Collect every member row belonging to only this one group: Transaction, Program, `VSAM Files
    Accessed (CRUD)`, `Copybooks Used`. Rows belonging to any other group are out of scope for this run.
-5. Resolve the target dialect: read `Config/Config.md`'s tech-stack mapping table and take the
+5. Resolve the target dialect: read `config/Config.md`'s tech-stack mapping table and take the
    **Target Technology** cell of the `Database` row whose **Source Technology** cell names VSAM (e.g.
    `VSAM (KSDS/ESDS/RRDS)`). Normalize it to the `tools/db-apply.mjs --dialect` keyword —
    `postgresql`, `mysql`, `sqlserver`, `sqlite`, or `oracle` (the script also accepts the plain name
@@ -298,7 +298,7 @@ do not add dialect logic anywhere else.
 4. Show the full content of the `-VSAM-Details.md` file as this run's output.
 
 ## Step 10 — Connect (and, in `create-then-provision` mode only, create the database)
-1. Use the dialect resolved in Step 1.5 — do not re-read `Config/Config.md` here. The target database
+1. Use the dialect resolved in Step 1.5 — do not re-read `config/Config.md` here. The target database
    *name* comes from the `DB_NAME` env var, not from `Config.md`.
 2. Confirm the connection environment variables this dialect needs are set
    (`DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD` for postgresql/mysql/sqlserver/oracle, or
@@ -364,7 +364,7 @@ do not add dialect logic anywhere else.
 - Process exactly **one** Trans Group per invocation — never batch multiple groups, and never touch
   another group's artefacts or provisioned tables. Within that group, process **every** VSAM file it
   references, not just the first.
-- `Input/`, `Artefacts/Discovery/MoveGroup.md`, `Config/Config.md`, and every `-DB-Details.md` /
+- `Input/`, `Artefacts/Discovery/MoveGroup.md`, `config/Config.md`, and every `-DB-Details.md` /
   `-schema.sql` file are **read-only** to this agent. `Setup-DB`'s behaviour, files, and contract are
   never modified, extended, or invoked from here.
 - Only write `Artefacts/TranGroupData/<Group No>-<Group Name>-VSAM-Details.md` and

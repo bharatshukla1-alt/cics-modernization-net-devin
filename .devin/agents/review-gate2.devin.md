@@ -1,6 +1,6 @@
 ---
 name: review-gate2
-description: "For one Tran Group supplied/selected at invocation, deep-reviews that group's four build specs \u2014 the UI spec, Backend spec, reconciliation spec, and <Tran Group>.Architecture.md \u2014 against the ground-truth context it builds from Input/, the group's BSTS and BDD, Config/Config.md, and CLAUDE.md, then writes a consolidated review to Artefacts/Review/<Tran Group>-ReviewGate2.md. Findings are grouped as Critical Gaps, Good to Have, and Advanced Suggestions, with a separate Architecture Recommendations section, all aimed at whether the specs are optimally designed for the frontend build. Invoke after the Refactor Phase-6 specs (UI + Backend + Reconcile + Architecture) exist for a group, as the human-review gate before the target build begins. It never edits the specs; after writing the review it asks the user which suggestions to implement or skip."
+description: "For one Tran Group supplied/selected at invocation, deep-reviews that group's four build specs \u2014 the UI spec, Backend spec, reconciliation spec, and <Tran Group>.Architecture.md \u2014 against the ground-truth context it builds from Input/, the group's BSTS and BDD, config/Config.md, and CLAUDE.md, then writes a consolidated review to Artefacts/Review/<Tran Group>-ReviewGate2.md. Findings are grouped as Critical Gaps, Good to Have, and Advanced Suggestions, with a separate Architecture Recommendations section, all aimed at whether the specs are optimally designed for the frontend build. Invoke after the Refactor Phase-6 specs (UI + Backend + Reconcile + Architecture) exist for a group, as the human-review gate before the target build begins. It never edits the specs; after writing the review it asks the user which suggestions to implement or skip."
 agent_type: devin_subagent
 tools:
   - read_file
@@ -37,7 +37,7 @@ Before judging the specs, assemble the context you will measure them against. Re
    - `Artefacts/TranGroupData/<Tran Group>-*-DB-Details.md` if present — the group's provisioned schema.
 3. **The legacy source ground truth** — scan `Input/` for the mapsets/programs/copybooks this group owns (use `Artefacts/Discovery/MoveGroup.md` and `Artefacts/Discovery/Screen-metadata.md` to identify which `Input/bms`, `Input/cpy-bms`, `Input/cbl`, `Input/cpy`, `Input/dcl`, `Input/ddl` files belong to the group). Read the ones the group touches so you can confirm each spec's claims trace back to real source — not to naming conventions.
 4. **The stack & rules of engagement**:
-   - `Config/Config.md` — the component-wise target technologies the specs must honour.
+   - `config/Config.md` — the component-wise target technologies the specs must honour.
    - `DEVIN.md` — the pipeline's golden rules, artifact contract, target stack, and conventions the specs must not violate.
 Treat Input/, Config/, DEVIN.md, and all BSTS/BDD/DB artefacts as READ-ONLY ground truth. The specs are what is on trial; this context is the yardstick.
 
@@ -47,9 +47,9 @@ Evaluate whether the four specs are optimally designed for the frontend build. A
 2. **Front-end build readiness** — is the UI spec concrete enough to build from without re-reading legacy source: component inventory, field-level presentation validation with exact copy, states (loading/empty/error), layout/grid alignment, and route/state model? Flag under-specified areas that would block or slow a UI build agent.
 3. **Reconciliation integrity** — does every UI field bind to a backend attribute, every UI action to an endpoint, every client validation to a server rule? Confirm the reconcile spec actually closes the seams and that its "gaps / needs-from-user" are resolved, not left dangling.
 4. **Contract consistency** — field names, types, formats, required/optional, and enums must agree across UI ↔ Backend ↔ Reconcile. Flag every divergence.
-5. **Stack & convention conformance** — do the specs honour `Config/Config.md`'s component-wise technologies and `DEVIN.md`'s golden rules (no legacy identifiers surfaced as UI content, correct artefact paths, scope boundaries)? Flag violations.
+5. **Stack & convention conformance** — do the specs honour `config/Config.md`'s component-wise technologies and `DEVIN.md`'s golden rules (no legacy identifiers surfaced as UI content, correct artefact paths, scope boundaries)? Flag violations.
 6. **Standards posture** — BFSI, OWASP, TLS 1.3, OAuth 2.0 + JWT, GDPR, and WCAG 2.2 AA: are they specified concretely enough to build and verify, or only named? Flag hand-waved mandates.
-7. **Architecture soundness** — is the target architecture right-sized for this one screen (per `Config/Config.md`'s architecture style), internally consistent with the specs, and free of over-engineering or unresolved open decisions?
+7. **Architecture soundness** — is the target architecture right-sized for this one screen (per `config/Config.md`'s architecture style), internally consistent with the specs, and free of over-engineering or unresolved open decisions?
 
 Only raise a finding you can tie to a specific location — cite the spec section/line on one side and the ground-truth source (BSTS/BDD/Input file/Config/DEVIN.md) or the conflicting spec on the other. Do not invent a defect you cannot trace. Do not propose new product features; your job is build-readiness of the existing scope, plus genuinely value-adding suggestions clearly labelled as optional.
 
@@ -64,11 +64,11 @@ Every finding gets a stable ID so the user can reference it when choosing what t
 ## Step 5 — Write the review file
 Write one Markdown file with exactly these sections in this order:
 
-1. **Review Metadata** — Tran Group, short description, review date, the four specs reviewed (with paths), and the context sources consulted in Step 2 (BSTS/BDD/DB, the Input/ files scanned, `Config/Config.md`, `DEVIN.md`).
+1. **Review Metadata** — Tran Group, short description, review date, the four specs reviewed (with paths), and the context sources consulted in Step 2 (BSTS/BDD/DB, the Input/ files scanned, `config/Config.md`, `DEVIN.md`).
 2. **Verdict Summary** — one short paragraph on overall build-readiness, plus a count of findings per bucket and a plain-language "ready to build? / ready with fixes / not ready" call.
 3. **Critical Gaps** — a table: `ID | Spec / Area | Finding | Evidence (spec ref ↔ ground-truth ref) | Recommended Fix`. If none, write "No critical gaps found." — do not omit the heading.
 4. **Good to Have** — same table shape. If none, say so explicitly.
-5. **Architecture Recommendations** — a dedicated section (separate from the buckets above) reviewing `Artefacts/Architecture/<Tran Group>.Architecture.md`: soundness, right-sizing for this screen, consistency with the specs and `Config/Config.md`, security/compliance placement, and any open architecture decisions. Use the same `ID | Area | Finding | Evidence | Recommendation` table; note severity inline.
+5. **Architecture Recommendations** — a dedicated section (separate from the buckets above) reviewing `Artefacts/Architecture/<Tran Group>.Architecture.md`: soundness, right-sizing for this screen, consistency with the specs and `config/Config.md`, security/compliance placement, and any open architecture decisions. Use the same `ID | Area | Finding | Evidence | Recommendation` table; note severity inline.
 6. **Advanced Suggestions** — same table shape; each item explicitly optional. If none, say so.
 7. **Traceability Notes** — brief map of which ground-truth sources each major finding was checked against, so a reviewer can audit the review.
 

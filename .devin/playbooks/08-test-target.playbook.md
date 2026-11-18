@@ -9,7 +9,7 @@ auto_proceed_on_success: true
 
 ## Step 1: Ask the user to choose a path
 
-Use the **AskUserQuestion** tool to present a selectable option list (the user scrolls and picks — they do not type the option). Ask a single question (header e.g. `Path`) with exactly these three options:
+Use the **a question to the user (message_user with options)** tool to present a selectable option list (the user scrolls and picks — they do not type the option). Ask a single question (header e.g. `Path`) with exactly these three options:
 
 1. **Rebuild**
 2. **Refactor**
@@ -32,7 +32,7 @@ Do not run any agent. Return to Step 1 so the user can pick again.
 
 Read `Artefacts/Discovery/MoveGroup.md`. If it is missing, stop and report that it's missing — suggest re-running `/03-MoveGroup` first.
 
-Collect the **distinct** `Trans Group` values from the file (e.g. `MG-01`) along with each group's `Short Description`. Use the **AskUserQuestion** tool to present these as a selectable option list (the user scrolls and picks — they do not type the identifier), one option per Trans Group, using the `Trans Group` value as the label and its `Short Description` as the option description. If the user has already confirmed a conversion order during `/03-MoveGroup`, present and process the groups in that confirmed order and ask for the **next** one in sequence rather than treating the list as unordered. Do not default to processing all of them.
+Collect the **distinct** `Trans Group` values from the file (e.g. `MG-01`) along with each group's `Short Description`. Use the **a question to the user (message_user with options)** tool to present these as a selectable option list (the user scrolls and picks — they do not type the identifier), one option per Trans Group, using the `Trans Group` value as the label and its `Short Description` as the option description. If the user has already confirmed a conversion order during `/03-MoveGroup`, present and process the groups in that confirmed order and ask for the **next** one in sequence rather than treating the list as unordered. Do not default to processing all of them.
 
 If no `Trans Group` values are found in the file, stop and report that, rather than presenting an empty list.
 

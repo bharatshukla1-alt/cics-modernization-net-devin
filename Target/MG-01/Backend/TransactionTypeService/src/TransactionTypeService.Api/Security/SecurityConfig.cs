@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,12 +22,23 @@ public static class SecurityConfig
                 };
             });
 
+        var adminAuthority = configuration["Authentication:AdminAuthority"] ?? "TXN_TYPE_ADMIN";
+        var readAuthority = configuration["Authentication:ReadAuthority"] ?? "TXN_TYPE_READ";
+
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("AdminAccess", policy => policy.RequireClaim("scope", "admin"));
-            options.AddPolicy("ReadAccess", policy => policy.RequireClaim("scope", "read", "admin"));
+            options.AddPolicy("AdminAccess", policy => policy.RequireAssertion(ctx => HasAuthority(ctx.User, adminAuthority)));
+            options.AddPolicy("ReadAccess", policy => policy.RequireAssertion(ctx =>
+                HasAuthority(ctx.User, readAuthority) || HasAuthority(ctx.User, adminAuthority)));
         });
 
         return services;
     }
+
+    // Keycloak issues scopes as one space-separated "scope" claim and realm roles as role claims.
+    private static bool HasAuthority(ClaimsPrincipal user, string authority) =>
+        user.FindAll("scope").Concat(user.FindAll("scp"))
+            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .Concat(user.FindAll(ClaimTypes.Role).Select(c => c.Value))
+            .Any(v => string.Equals(v, authority, StringComparison.OrdinalIgnoreCase));
 }

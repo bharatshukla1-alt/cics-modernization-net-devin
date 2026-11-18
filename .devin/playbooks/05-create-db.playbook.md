@@ -11,11 +11,11 @@ auto_proceed_on_success: true
 
 - If a Trans Group identifier (e.g. `MG-01`) was provided as an argument to this command, use it directly.
 - If none was provided, ask the user which Trans Group to process this run. If the user has already confirmed a conversion order during `/03-MoveGroup`, ask for the **next** group in that confirmed sequence rather than treating the list as unordered. Do not default to running all of them.
-- Do not pre-read or validate `Artefacts/MoveGroup.md` for correctness here — each agent's own Step 1 owns checking that the file exists and that the identifier matches, and will report back if either fails. The only reading this command does of that file is the classification in Step 2, and the only failure it reports itself is the source-disagreement stop in Step 2.3.
+- Do not pre-read or validate `Artefacts/Discovery/MoveGroup.md` for correctness here — each agent's own Step 1 owns checking that the file exists and that the identifier matches, and will report back if either fails. The only reading this command does of that file is the classification in Step 2, and the only failure it reports itself is the source-disagreement stop in Step 2.3.
 
 ## Step 2: Detect which source data technologies this group actually uses
 
-This detection reads the **source components**, not `Config/Config.md`. `Config.md` declares the
+This detection reads the **source components**, not `config/Config.md`. `Config.md` declares the
 source→target technology mapping a customer *intends*; it lists no source files and cannot say what
 a given repo actually contains. Its only role in this phase is supplying the target dialect, which
 each agent resolves for itself.
@@ -56,11 +56,11 @@ exists, say — are **not** a stop here. `setup-vsam.devin.md`'s own Step 4 reso
 records a missing definition under Gaps, which is the right place for a per-file gap.
 
 **2.4 — Report any mismatch against `Config.md`, then override it.** Compare the agreed result with
-`Config/Config.md`'s declared Source Technology rows and tell the user about any disagreement (for
+`config/Config.md`'s declared Source Technology rows and tell the user about any disagreement (for
 example: "`Config.md` declares DB2 and VSAM; this group's source uses DB2 only"). This is a **report,
 never a stop, and never authoritative** — the source detection wins.
 
-**2.5 — Target-dialect agreement guard.** If VSAM was detected, read every row of `Config/Config.md`
+**2.5 — Target-dialect agreement guard.** If VSAM was detected, read every row of `config/Config.md`
 whose Design Area is `Database` and compare their Target Technology cells. If they name different
 targets, **stop** — DB2-derived and VSAM-derived tables are specified to land in the same target
 database, and that premise is false when the two rows disagree. Report both rows and ask which

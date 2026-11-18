@@ -9,9 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure EF Core with PostgreSQL
+// PostgreSQL when ConnectionStrings:DefaultConnection is set; in-memory store otherwise (local/dev only)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<TransactionTypeContext>(options =>
-    options.UseInMemoryDatabase("CICS_DB"));
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+        options.UseInMemoryDatabase("CICS_DB");
+    else
+        options.UseNpgsql(connectionString);
+});
 
 // Configure Authentication & Authorization
 builder.Services.AddSecurityConfiguration(builder.Configuration);

@@ -4,8 +4,8 @@
 - **Tran Group**: MG-01
 - **Short Description**: Transaction type maintenance — list, add, update, delete
 - **Source Specs Read**: 
-  - `.Claude/Specs/Refactor/MG-01-UI-Spec.md`
-  - `.Claude/Specs/Refactor/MG-01-Backend-Spec.md`
+  - `Artefacts/Specs/Refactor/MG-01-UI-Spec.md`
+  - `Artefacts/Specs/Refactor/MG-01-Backend-Spec.md`
 - **Target Stack**: React, Tailwind CSS, microanimation, Responsive UI, .NET Core 9 (C#) with ASP.NET Core Web API, Postgres, Oauth 2.0, HTTPS/TLS 1.3, Stateless REST + client-held state.
 
 ## 2. Reconciled Screen Overview

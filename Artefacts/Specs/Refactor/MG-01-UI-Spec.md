@@ -3,7 +3,7 @@
 ## 1. Spec Metadata & Traceability
 - **Tran Group**: MG-01 (Transaction type maintenance — list, add, update, delete)
 - **Target UI Stack**: React, Tailwind CSS, microanimation, Responsive UI
-- **Legacy Source Files**: `Artefacts/Discovery/MoveGroup.md`, `Config/Config.md`, `Config/Style-Sheet.md`, `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BSTS.md`, `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BDD.md`, `Artefacts/Discovery/Screen-metadata.md`, `Input/bms/COTRTLI.bms`, `Input/bms/COTRTUP.bms`.
+- **Legacy Source Files**: `Artefacts/Discovery/MoveGroup.md`, `config/Config.md`, `Config/Style-Sheet.md`, `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BSTS.md`, `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BDD.md`, `Artefacts/Discovery/Screen-metadata.md`, `Input/bms/COTRTLI.bms`, `Input/bms/COTRTUP.bms`.
 - **Legacy to Target Mapping**:
   - `COTRTLI`/`CTRTLIA` (List transaction types) → Transaction Type List Screen
   - `COTRTUP`/`CTRTUPA` (Add/Update/Delete) → Transaction Type Maintenance Details Screen

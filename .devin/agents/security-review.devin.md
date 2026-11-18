@@ -28,7 +28,7 @@ You are invoked as a subagent inside a multi-agent harness: you have no direct c
 1. Check whether `Artefacts/Code Quality & Security/<Tran Code>-Security-Review.md` already exists.
 2. If it exists, **delete it** (e.g. `rm "Artefacts/Code Quality & Security/<Tran Code>-Security-Review.md"`) so this run produces a clean report. Do not archive, rename, or version it; do not ask — the command's contract is that the file is replaced.
 3. If it does not exist, continue. Create the `Artefacts/Code Quality & Security/` folder if it is missing.
-4. Delete **only** that one file. Never delete anything else under `Artefacts/`, `Target/`, `Input/`, or `.Claude/`.
+4. Delete **only** that one file. Never delete anything else under `Artefacts/`, `Target/`, `Input/`, or `.devin/`.
 
 ## Step 3 — Build the review context
 Before judging the code, assemble what you will measure it against. Read each of these that exists; record any that are missing as a gap rather than guessing its contents:
@@ -39,7 +39,7 @@ Before judging the code, assemble what you will measure it against. Read each of
    - `Artefacts/Specs/Refactor/<Tran Code>-UI-Spec.md`, `<Tran Code>-Backend-Spec.md`, `<Tran Code>-reconcile-Spec.md`
    - `Artefacts/Architecture/<Tran Code>.Architecture.md`
 3. **The functional ground truth** — `Artefacts/TranGroupData/<Tran Code>-*-BSTS.md`, `-BDD.md`, and `-DB-Details.md` (which fields are sensitive: PAN/card numbers, account IDs, SSN, names, balances).
-4. **The rules of engagement** — `Config/Config.md` for the mandated target security stack resolved via Config keys (`target.security.*`, `target.database.engine`, `target.cache.store`, `target.architecture.type`) and `DEVIN.md` for the pipeline's golden rules, ports, and known configuration gotchas.
+4. **The rules of engagement** — `config/Config.md` for the mandated target security stack resolved via Config keys (`target.security.*`, `target.database.engine`, `target.cache.store`, `target.architecture.type`) and `DEVIN.md` for the pipeline's golden rules, ports, and known configuration gotchas.
 
 Everything in this step other than the single report file is **READ-ONLY**. The target code is what is on trial; the specs, Config, and DEVIN.md are the yardstick.
 
@@ -48,7 +48,7 @@ Work through every area below for both frontend and backend. For each area, eith
 
 1. **Authentication & session** — token issuance/validation (JWT signature, `iss`, `aud`, `exp`, clock skew), issuer/JWKS configuration, token storage on the client (localStorage vs memory vs httpOnly cookie), refresh/renewal and silent-check flows, logout and token revocation, session fixation, idle/absolute timeout, any hardcoded, default, or bypassable credentials or `permitAll()` shortcuts.
 2. **Authorization** — enforcement of the realm-role → authority mapping on every endpoint (method-level `@PreAuthorize` / security-matcher coverage), read vs write separation, missing checks on non-GET endpoints, IDOR / object-level authorization (can a caller fetch or mutate a record they don't own by changing an id?), privilege escalation, and client-side-only role gating not backed by a server check.
-3. **Transport & network** — HTTPS/TLS 1.3 per `Config/Config.md` vs what the service actually listens on, plaintext HTTP endpoints, HSTS, secure/`SameSite` cookie attributes, CORS configuration (wildcard origins, `allowCredentials` with `*`, over-broad methods/headers), proxy/dev-server exposure, mixed content, and any service-to-service or database link that is unencrypted.
+3. **Transport & network** — HTTPS/TLS 1.3 per `config/Config.md` vs what the service actually listens on, plaintext HTTP endpoints, HSTS, secure/`SameSite` cookie attributes, CORS configuration (wildcard origins, `allowCredentials` with `*`, over-broad methods/headers), proxy/dev-server exposure, mixed content, and any service-to-service or database link that is unencrypted.
 4. **Input validation & injection** — server-side validation on every inbound field (Bean Validation annotations actually present and enforced, not just declared in the spec), type/length/range/format/enum checks, SQL and JPQL injection (string-concatenated queries, `@Query` with concatenation, native queries), command/LDAP/XPath/header injection, path traversal on any file or resource lookup, mass assignment / over-posting through entity binding, and deserialization of untrusted input.
 5. **Output encoding & browser-side risk** — XSS sinks (`dangerouslySetInnerHTML`, `innerHTML`, `eval`, dynamic `href`/`src` from user data), unsanitized rendering of server or URL data, Content-Security-Policy and the other security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`/`frame-ancestors`), clickjacking, open redirects, and untrusted data reaching client-side routing or template strings.
 6. **CSRF & state-changing requests** — CSRF protection posture and whether it is coherent with the auth model (bearer-token APIs vs cookie-based sessions), any `csrf().disable()` paired with cookie auth, state-changing operations exposed over GET, missing `SameSite` protections, and unvalidated `Origin`/`Referer` on sensitive mutations.
@@ -97,11 +97,11 @@ Consistency rules — the scorecard must never contradict the findings:
 Write one Markdown file with exactly these sections in this order:
 
 1. **Security Scorecard** — the nine-metric table from Step 6, first thing in the file, with columns: `# | Metric | Measured value | Band | Basis (how it was derived)`. Follow it with two or three sentences interpreting the scorecard.
-2. **Review Metadata** — Tran Code, short description, review date, the target paths scanned (`Target/<Tran Code>/Frontend`, `.../Backend/...`), and the context sources consulted in Step 3 (specs, Architecture, BSTS/BDD/DB-Details, `Config/Config.md`, `DEVIN.md`).
+2. **Review Metadata** — Tran Code, short description, review date, the target paths scanned (`Target/<Tran Code>/Frontend`, `.../Backend/...`), and the context sources consulted in Step 3 (specs, Architecture, BSTS/BDD/DB-Details, `config/Config.md`, `DEVIN.md`).
 3. **Executive Summary** — one short paragraph on the overall security posture, a count of findings per severity, and a plain-language call: **"safe to proceed" / "proceed with fixes" / "not safe to deploy"**.
 4. **Findings by Severity** — one table per severity band (Critical, High, Medium, Low/Informational), each with columns: `ID | Area | Finding | Evidence (file:line) | Risk / Impact | Recommended Fix`. If a band is empty, keep the heading and write "None found."
 5. **Area Coverage Matrix** — a table with a row for **each of the fifteen areas** from Step 4: `# | Area | Status (Findings / Clean / Not applicable — why) | Finding IDs`. Every area must appear; this is how the reader knows nothing was skipped.
-6. **Compliance Posture** — how the code stands against the mandates in `Config/Config.md` and the specs: OAuth 2.0 + JWT, HTTPS/TLS 1.3, OWASP Top 10, PCI-DSS (cardholder data handling), and GDPR (personal data handling). State what is met, what is partially met, and what is absent, referencing finding IDs.
+6. **Compliance Posture** — how the code stands against the mandates in `config/Config.md` and the specs: OAuth 2.0 + JWT, HTTPS/TLS 1.3, OWASP Top 10, PCI-DSS (cardholder data handling), and GDPR (personal data handling). State what is met, what is partially met, and what is absent, referencing finding IDs.
 7. **Remediation Plan** — findings ordered as a suggested fix sequence, grouped into "fix before deployment", "fix in the next iteration", and "optional hardening", with the file(s) each change would touch and a rough effort indication.
 8. **Open Items & Assumptions** — anything you could not verify from the code alone (runtime configuration, infrastructure-level controls, secrets supplied at deploy time, dependency CVE status needing a scan, metrics you had to estimate), stated as an open question rather than a finding.
 

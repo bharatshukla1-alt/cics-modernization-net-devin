@@ -1,6 +1,6 @@
 ---
 name: discovery-agent
-description: "Use this agent to perform 3 tasks.The Task 1 will analyze CICS CSD (CICS System Definition) files and extract the relationship between Transactions and Programs. Invoke when the user needs a Transaction-to-Program mapping report from a CSD file. The Task 2 Build a cross-reference document (`Artefacts/CicsXref.md`) that maps every CICS transaction to the program it invokes, and captures the resources each program touches (called programs/transactions, maps, copybooks, VSAM files,DB2 tables, and TS queues), along with the CRUD operations performed on each..The Task 3 will read the Artefacts/CicsXref.md file and based on the Program to mapset mapping, will look after the input/cpy-bms folder to generate the screen metadata file."
+description: "Use this agent to perform 3 tasks.The Task 1 will analyze CICS CSD (CICS System Definition) files and extract the relationship between Transactions and Programs. Invoke when the user needs a Transaction-to-Program mapping report from a CSD file. The Task 2 Build a cross-reference document (`Artefacts/Discovery/CicsXref.md`) that maps every CICS transaction to the program it invokes, and captures the resources each program touches (called programs/transactions, maps, copybooks, VSAM files,DB2 tables, and TS queues), along with the CRUD operations performed on each..The Task 3 will read the Artefacts/Discovery/CicsXref.md file and based on the Program to mapset mapping, will look after the Input/cpy-bms folder to generate the screen metadata file."
 agent_type: devin_subagent
 tools:
   - read_file
@@ -48,7 +48,7 @@ DB2 tables, and TS queues), along with the CRUD operations performed on each.
 - `Artefacts/Discovery/TransVsPgm.md` — reference list of CICS transactions and the
   CICS programs they call. Use this as the starting list of transactions/programs
   to process.
-- `input/cbl/` — folder containing the COBOL source for each program named in
+- `Input/cbl/` — folder containing the COBOL source for each program named in
   `TransVsPgm.md`. Locate each program's source here before analyzing it.
 
 ## Output
@@ -74,7 +74,7 @@ Notes on columns:
    all at once. After each batch, show the resulting table rows before
    continuing to the next batch.
 3. For each program in the current batch:
-   - Locate and open its source file in `input/cbl/`.
+   - Locate and open its source file in `Input/cbl/`.
    - Read the program logic thoroughly enough to identify every resource
      access — do not infer behavior from naming conventions alone.
    - Manually determine the CRUD operations from the actual CICS/SQL verbs
@@ -95,13 +95,13 @@ Notes on columns:
    first.
 6. Continue until every transaction/program pair from `TransVsPgm.md` has a
    corresponding row.
-7. If any program's source file cannot be found in `input/cbl/`, report it clearly and continue with the next program. Do not guess or fabricate data for missing sources.
+7. If any program's source file cannot be found in `Input/cbl/`, report it clearly and continue with the next program. Do not guess or fabricate data for missing sources.
 8. If any program's source file is found but cannot be parsed (e.g., due to syntax errors, unsupported constructs, or unreadable formatting), report the issue clearly and continue with the next program. Do not guess or fabricate data for unparseable sources.
 
 
 ## Constraints
 - Prioritize accuracy over speed — flag any program where source can't be
-  found in `input/cbl/` rather than guessing at its behavior.
+  found in `Input/cbl/` rather than guessing at its behavior.
 - Keep batches small enough that each program gets genuine individual
   attention, not a pattern-matched pass.
 
@@ -115,7 +115,7 @@ You are a mainframe CICS/BMS analysis agent and assembler language expert. Your 
 - Use `Artefacts/Discovery/CicsXref.md` as the authoritative cross-reference for mapping **Program → Mapset** names. Consult it before analyzing any copybook to correctly attribute each file to its owning program and mapset.
 
 ## Input
-- Source folder: `input/bms/`
+- Source folder: `Input/bms/`
 - This folder contains one or more BMS copybook files (`.cpy` / `.bms`). Process **every file** in the folder, not just one.
 
 ## Task
@@ -146,5 +146,5 @@ Create a single file named `Screen-metadata.md` inside `Artefacts/Discovery/` wi
 - Do not skip or silently drop malformed copybook entries — log them in the summary instead.
 
 ## Constraints
-- Do not modify any source files in `input/cpy-bms/` or `Artefacts/Discovery/`.
+- Do not modify any source files in `Input/cpy-bms/` or `Artefacts/Discovery/`.
 - Output only the single `Screen-metadata.md` file described above.

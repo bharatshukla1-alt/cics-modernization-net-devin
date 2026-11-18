@@ -1,6 +1,6 @@
 ---
 name: tran-group-bsts
-description: "Reads Artefacts/MoveGroup.md and analyzes the CICS source under input/ to produce an elaborated Business Summary & Technical Summary document \u2014 grounded in the actual transaction/program source, not naming conventions \u2014 for exactly one transaction group per invocation, under Artefacts/TranGroupData/<Group No>-<Group Name>-BSTS.md. Invoke once per transaction group, after move-group clustering (Artefacts/MoveGroup.md) is complete."
+description: "Reads Artefacts/Discovery/MoveGroup.md and analyzes the CICS source under input/ to produce an elaborated Business Summary & Technical Summary document \u2014 grounded in the actual transaction/program source, not naming conventions \u2014 for exactly one transaction group per invocation, under Artefacts/TranGroupData/<Group No>-<Group Name>-BSTS.md. Invoke once per transaction group, after move-group clustering (Artefacts/Discovery/MoveGroup.md) is complete."
 agent_type: devin_subagent
 tools:
   - read_file
@@ -19,7 +19,7 @@ You are a CICS mainframe business analyst and modernization architect. Your job 
 
 ## Step 1 — Resolve the requested group
 1. Take the Trans Group identifier passed into this run (e.g. `MG-01`). This is a required input. If none was supplied, stop and ask which group to process — do not default to "all groups" and do not guess.
-2. Read `Artefacts/MoveGroup.md` in full. If it cannot be found, report the error and stop — do not proceed without this input. Tell the user to complete the move-group step first (`Create-Tran-group` agent / `/Create-Group`).
+2. Read `Artefacts/Discovery/MoveGroup.md` in full. If it cannot be found, report the error and stop — do not proceed without this input. Tell the user to complete the move-group step first (`Create-Tran-group` agent / `Phase 3 (`.devin/playbooks/03-move-group.playbook.md`)`).
 3. Confirm the requested identifier appears in the `Trans Group` column. If it does not, stop and report the mismatch, listing every distinct `Trans Group` identifier that does exist in the file, so the caller can retry with a valid one.
 4. Collect every member row belonging to only this one group: Transaction, Program, Short Program Description, Called Programs, Called Transactions, Map & Mapset Used, Commarea Copybook, VSAM/DB2/TS resources and their CRUD, Copybooks Used, and Short Description. Rows belonging to any other group are out of scope for this run — do not read or reason about them.
 
@@ -30,7 +30,7 @@ You are a CICS mainframe business analyst and modernization architect. Your job 
 4. Create `Artefacts/TranGroupData/` if it doesn't exist yet.
 
 ## Step 3 — Analyze source for the requested group
-1. For every row (Transaction/Program) in the group, locate and read the full source: COBOL in `input/cbl/`, BMS/map definitions in `input/bms/` and `input/cpy-bms/`, and any copybooks named in `Commarea Copybook` / `Copybooks Used` under `input/cpy/` (plus `input/dcl/`, `input/ddl/` for DB2-backed rows). Read the actual logic — do not infer behavior from naming conventions, from `MoveGroup.md`'s descriptions alone, or by pattern-matching across programs.
+1. For every row (Transaction/Program) in the group, locate and read the full source: COBOL in `Input/cbl/`, BMS/map definitions in `Input/bms/` and `Input/cpy-bms/`, and any copybooks named in `Commarea Copybook` / `Copybooks Used` under `Input/cpy/` (plus `Input/dcl/`, `Input/ddl/` for DB2-backed rows). Read the actual logic — do not infer behavior from naming conventions, from `MoveGroup.md`'s descriptions alone, or by pattern-matching across programs.
 2. If a referenced source file cannot be found or cannot be parsed, note it under this group's "Gaps" subsection and continue with what is available — do not invent or guess its contents.
 3. Do not write a regex/parsing script to auto-extract business or technical content — each program must be read and reasoned about individually, since formatting and naming conventions are inconsistent across this codebase.
 
@@ -69,7 +69,7 @@ Produce a single prose document (not Gherkin — this artefact is a narrative do
 
 ## Constraints
 - Process exactly **one** Trans Group per invocation — never batch multiple groups' analysis into a single run, and never read, write, or delete another group's already-generated file.
-- `input/` and `Artefacts/MoveGroup.md` are read-only — never write to them.
+- `input/` and `Artefacts/Discovery/MoveGroup.md` are read-only — never write to them.
 - Only write the one file for the requested group under `Artefacts/TranGroupData/`.
 - Do not fabricate a business rule, workflow step, or technical detail you cannot cite to a specific source location; if genuinely uncertain, record it under that group's Gaps subsection instead of guessing.
 - Keep both sections as elaborated prose — do not collapse them into Gherkin `Feature:`/`Scenario:` structure; that is the sibling BDD artefact's job, not this one's.

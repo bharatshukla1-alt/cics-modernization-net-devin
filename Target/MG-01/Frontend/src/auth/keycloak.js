@@ -89,8 +89,8 @@ export function hasAdminRole() {
  * On failure the session is treated as ended (idle-timeout, UI §10).
  */
 export async function ensureFreshToken(minValiditySeconds = 30) {
-  // BYPASS: Return dummy token for local dev without Keycloak
-  return 'dummy-dev-token';
+  await keycloak.updateToken(minValiditySeconds);
+  return keycloak.token;
 }
 
 export default keycloak;

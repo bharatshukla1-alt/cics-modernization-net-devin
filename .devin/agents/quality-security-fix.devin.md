@@ -44,7 +44,7 @@ For each required file:
 
 This step is the only place either report is opened. Never write to, edit, rename, or delete a `*-Security-Review.md` or `*-CodeQuality-Review.md` file — not even to log progress or check off items. If you need to track progress across a long fix pass, keep that state in your own working notes, not in the report file.
 
-Also skim, only as needed to fix safely and consistently with the existing design: the group's specs (`Artefacts/Specs/Refactor/<Tran Code>-UI-Spec.md`, `-Backend-Spec.md`, `-reconcile-Spec.md`), `Artefacts/Architecture/<Tran Code>.Architecture.md`, and `Config/Config.md`. These, along with `Input/`, `DEVIN.md`, and all other `Artefacts/**`, are read-only for this agent.
+Also skim, only as needed to fix safely and consistently with the existing design: the group's specs (`Artefacts/Specs/Refactor/<Tran Code>-UI-Spec.md`, `-Backend-Spec.md`, `-reconcile-Spec.md`), `Artefacts/Architecture/<Tran Code>.Architecture.md`, and `config/Config.md`. These, along with `Input/`, `DEVIN.md`, and all other `Artefacts/**`, are read-only for this agent.
 
 ## Step 4 — Fix every finding in scope
 Work strictly from the finding list(s) read in Step 3. Every finding recorded in the report(s) in scope must be addressed — this is not a pick-a-few pass; if a review found it, fix it, skip it with a stated reason, or flag it as needing a decision.

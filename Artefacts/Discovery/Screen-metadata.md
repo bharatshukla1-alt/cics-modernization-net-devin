@@ -1,6 +1,6 @@
 # Screen Metadata
 
-Source: BMS copybooks in `Input\bms\` cross-referenced against `Artefacts\CicsXref.md`.
+Source: BMS copybooks in `Input/bms/` cross-referenced against `Artefacts/CicsXref.md`.
 
 **Field Initial methodology:** For each named field, "Field Initial" is populated
 from the field's own `INITIAL=` attribute when present (this covers function-key
@@ -16,8 +16,8 @@ Needs Review section for details.
 
 ## Mapset: COTRTLI (Map CTRTLIA)
 
-Source copybook: `Input\bms\COTRTLI.bms`
-Program: COTRTLIC | Transaction: CTLI (per `Artefacts\CicsXref.md`)
+Source copybook: `Input/bms/COTRTLI.bms`
+Program: COTRTLIC | Transaction: CTLI (per `Artefacts/CicsXref.md`)
 
 | Field Name | Field Initial | Field Length | Field Type | Field Attribute |
 |---|---|---|---|---|
@@ -80,8 +80,8 @@ Notes specific to this mapset:
 
 ## Mapset: COTRTUP (Map CTRTUPA)
 
-Source copybook: `Input\bms\COTRTUP.bms`
-Program: COTRTUPC | Transaction: CTTU (per `Artefacts\CicsXref.md`)
+Source copybook: `Input/bms/COTRTUP.bms`
+Program: COTRTUPC | Transaction: CTTU (per `Artefacts/CicsXref.md`)
 
 | Field Name | Field Initial | Field Length | Field Type | Field Attribute |
 |---|---|---|---|---|
@@ -123,11 +123,11 @@ Notes specific to this mapset:
 
 ## Summary
 
-- Total BMS copybooks found in `Input\bms\`: 2 (`COTRTLI.bms`, `COTRTUP.bms`)
+- Total BMS copybooks found in `Input/bms/`: 2 (`COTRTLI.bms`, `COTRTUP.bms`)
 - Total BMS copybooks processed: 2
 - Total mapsets found: 2 (`COTRTLI` / map `CTRTLIA`, `COTRTUP` / map `CTRTUPA`)
 - Both mapsets were successfully matched to their owning program/transaction
-  in `Artefacts\CicsXref.md` (COTRTLIC/CTLI and COTRTUPC/CTTU); no `UNMAPPED`
+  in `Artefacts/CicsXref.md` (COTRTLIC/CTLI and COTRTUPC/CTTU); no `UNMAPPED`
   mapsets encountered.
 - Files that could not be parsed: none — both copybooks parsed fully as
   standard `DFHMSD`/`DFHMDI`/`DFHMDF` BMS macro source.

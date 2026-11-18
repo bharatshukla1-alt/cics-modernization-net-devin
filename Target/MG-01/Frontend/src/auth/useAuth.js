@@ -8,8 +8,8 @@ import { getUsername, hasAdminRole, logout, login } from './keycloak';
  */
 export function useAuth() {
   return {
-    username: 'LocalAdmin',
-    canWrite: true,
+    username: getUsername(),
+    canWrite: hasAdminRole(),
     logout,
     login,
   };
