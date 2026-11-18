@@ -18,7 +18,7 @@
 | Business domain | Reference-data (configuration) maintenance of Transaction Type codes used to classify financial transactions in the CardDemo application (BSTS §a) |
 | Backend services delivered | 1 microservice — **Transaction Type service** exposing REST endpoints over the `TRANSACTION_TYPE` table |
 
-### 1.1 Component-wise target stack (quoted from `Config/Config.md`)
+### 1.1 Component-wise target stack (quoted from `config/Config.md`)
 
 | Design area | Target technology (verbatim) |
 |---|---|
@@ -37,7 +37,7 @@
 
 The backend build target language is **object-oriented C# / .NET Core** — classes/interfaces, encapsulation,
 composition, and a layered domain model (controller → service → repository → entity/DTO), **not** a
-procedural line-by-line translation of the COBOL. `Config/Config.md` already names ".NET Core 9 (C#) with ASP.NET Core Web API", so the mandatory-C# requirement and Config **agree** — no discrepancy recorded on this point
+procedural line-by-line translation of the COBOL. `config/Config.md` already names ".NET Core 9 (C#) with ASP.NET Core Web API", so the mandatory-C# requirement and Config **agree** — no discrepancy recorded on this point
 (see Section 11 for the full discrepancy log).
 
 ### 1.3 Scope note — no temporary storage / messaging / VSAM
@@ -54,11 +54,11 @@ pseudo-conversational COMMAREA state machine collapses into request-scoped state
 | Source file | Used for |
 |---|---|
 | `Artefacts/Discovery/MoveGroup.md` | Group membership, programs, transactions, CRUD footprint |
-| `Config/Config.md` | Component-wise target stack |
+| `config/Config.md` | Component-wise target stack |
 | `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BSTS.md` | Business & technical summary, workflow, rules, paragraph-level behaviour |
 | `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-BDD.md` | Acceptance scenarios, validations, error handling, edge cases |
 | `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-DB-Details.md` | Target Postgres schema, CRUD footprint, seed data |
-| `.Claude/Specs/Refactor/MG-01-UI-Spec.md` | Frontend contract: screens, fields, actions, routes, message catalogue |
+| `Artefacts/Specs/Refactor/MG-01-UI-Spec.md` | Frontend contract: screens, fields, actions, routes, message catalogue |
 
 **Frontend build files consulted:** none exist yet. `Glob` of `Target/**` and `**/MG-01/**` returned
 no files, so the **UI spec is the sole frontend contract** for this backend spec (per Step 3.3). When
@@ -105,7 +105,7 @@ no backend consequence in this service and is recorded as a gap in Section 11.
 
 ## 3. Service & API Specification
 
-**Target implementation language: object-oriented C# / .NET Core.** API style per `Config/Config.md`
+**Target implementation language: object-oriented C# / .NET Core.** API style per `config/Config.md`
 "REST APIs, API gateway": stateless JSON/REST controllers behind an API gateway; JSON request/response;
 `Content-Type: application/json`; all traffic over TLS 1.3 (Section 8). Base path: `/api/v1`.
 
@@ -276,7 +276,7 @@ Status codes: `204`; `400`; `404`; `409` dependents/lock; `401`/`403`; `500`.
 
 #### E6 — Database connectivity / health (infrastructure, not a business endpoint)
 **Legacy origin:** `9998-PRIMING-QUERY` (`SELECT 1 FROM SYSIBM.SYSDUMMY1`), BSTS/BDD "Db2 connectivity is
-verified before any screen is built". Implemented as a Spring Boot Actuator **DB health indicator**
+verified before any screen is built". Implemented as an ASP.NET Core **DB health check** (`AddDbContextCheck`, exposed at `/health`)
 (`SELECT 1`); when the datastore is unreachable, business endpoints E1–E5 short-circuit and return
 **503** `SERVICE_UNAVAILABLE` with a safe message rather than attempting data access (mirrors "returns
 without building the 3270 map"). Not exposed as a public REST resource.
@@ -524,7 +524,7 @@ Controls the build MUST implement. Legacy security was RACF (Config Security row
 - All other WCAG obligations (focus, contrast, keyboard, live-region wiring) are **front-end responsibility**
   (UI-Spec §9).
 
-> No standard named in this section conflicts with `Config/Config.md` — Config already specifies OAuth 2.0
+> No standard named in this section conflicts with `config/Config.md` — Config already specifies OAuth 2.0
 > and TLS 1.3, matching the mandatory instruction. Recorded (as a non-conflict) in Section 11.
 
 ---
@@ -545,7 +545,7 @@ Controls the build MUST implement. Legacy security was RACF (Config Security row
   silently); concurrent-delete-during-update surfaces per E4 (409 or re-create). Reads use `READ COMMITTED`.
 - **Logging/observability:** structured logs with `traceId`; audit entries for every write (principal,
   endpoint, `typeCode`, outcome code). No tokens, no raw SQLSTATE, no full driver payloads in any client
-  response. Expose Actuator health (incl. the E6 DB indicator) for readiness/liveness.
+  response. Expose the ASP.NET Core `/health` endpoint (incl. the E6 DB check) for readiness/liveness.
 - **Internationalization/locale:** user-facing messages (Sections 3/5/7) should be externalized to message
   bundles keyed by the machine `code` so the frontend/locale layer can localize; codes are locale-invariant.
   Data itself is ASCII reference codes/descriptions — no locale-sensitive formatting (no amounts/dates in
@@ -556,7 +556,7 @@ Controls the build MUST implement. Legacy security was RACF (Config Security row
 ## 10. Backend Folder Structure
 
 To be created under `target/MG-01/` **at build time** (this spec creates nothing). Adapted to the
-`Config/Config.md` Backend row (.NET Core 9) and API row (REST). Only folders this service needs.
+`config/Config.md` Backend row (.NET Core 9) and API row (REST). Only folders this service needs.
 
 ```
 target/MG-01/

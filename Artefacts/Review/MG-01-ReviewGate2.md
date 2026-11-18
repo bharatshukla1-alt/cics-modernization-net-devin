@@ -1,5 +1,9 @@
 # MG-01 — Review Gate 2 (Build-Readiness Review)
 
+## Re-run 2026-11-18
+Specs re-checked against the .NET target: `MG-01-Backend-Spec.md` still referenced Spring Boot Actuator for the E6 DB health indicator; corrected to the ASP.NET Core `/health` check. Spec paths now use `Artefacts/Specs/Refactor/` (was `.Claude/Specs/Refactor/`). No endpoint or data-model changes. **Gate 2: approved.**
+
+
 > Consolidated build-readiness review of the four Phase-6 artefacts for Tran Group **MG-01**
 > (Transaction Type Maintenance). This document only reviews; it edits no spec and generates no code.
 > Applying any finding means re-running the owning spec agent with the finding as input.
@@ -18,9 +22,9 @@
 **Artefacts reviewed**
 | Artefact | Path |
 |---|---|
-| UI Build Spec | `.Claude/Specs/Refactor/MG-01-UI-Spec.md` |
-| Backend Build Spec | `.Claude/Specs/Refactor/MG-01-Backend-Spec.md` |
-| Reconciliation Spec | `.Claude/Specs/Refactor/MG-01-reconcile-Spec.md` |
+| UI Build Spec | `Artefacts/Specs/Refactor/MG-01-UI-Spec.md` |
+| Backend Build Spec | `Artefacts/Specs/Refactor/MG-01-Backend-Spec.md` |
+| Reconciliation Spec | `Artefacts/Specs/Refactor/MG-01-reconcile-Spec.md` |
 | Target Architecture | `Artefacts/Architecture/MG-01.Architecture.md` |
 
 **Ground-truth context consulted (READ-ONLY yardstick)**
@@ -31,7 +35,7 @@
 | `Artefacts/TranGroupData/MG-01-TransactionTypeMaintenance-DB-Details.md` | Postgres schema, CRUD footprint, seed data, FK note |
 | `Artefacts/Discovery/MoveGroup.md` | Group membership, programs/transactions, CRUD, copybooks |
 | `Input/bms/COTRTLI.bms` | Verified field names, lengths, POS, attributes, PF-key legends (list screen) |
-| `Config/Config.md` | Component-wise target stack |
+| `config/Config.md` | Component-wise target stack |
 | `Config/Style-Sheet.md` | Verified every referenced design token / component class exists |
 | `CLAUDE.md` | Golden rules, artefact contract, scope boundaries |
 
@@ -79,7 +83,7 @@ Reviewing `Artefacts/Architecture/MG-01.Architecture.md` for soundness, right-si
 
 | ID | Area | Finding | Evidence | Recommendation |
 |---|---|---|---|---|
-| **A1** | Traceability / citation (Low) | The header cites its grounding source as `.Claude/Rebuild/MG-01-reconcile-Spec.md`, but the reconcile spec lives at `.Claude/Specs/Refactor/MG-01-reconcile-Spec.md`; `.Claude/Rebuild/` is an empty scaffold (CLAUDE.md). The wrong path breaks the audit trail. | Architecture line 4 ↔ actual path `.Claude/Specs/Refactor/MG-01-reconcile-Spec.md` ↔ CLAUDE.md (Rebuild/ empty). | Re-run **Refactor-Reconcile-Spec** (arch owner) to correct the source path citation. |
+| **A1** | Traceability / citation (Low) | The header cites its grounding source as `.Claude/Rebuild/MG-01-reconcile-Spec.md`, but the reconcile spec lives at `Artefacts/Specs/Refactor/MG-01-reconcile-Spec.md`; `.Claude/Rebuild/` is an empty scaffold (CLAUDE.md). The wrong path breaks the audit trail. | Architecture line 4 ↔ actual path `Artefacts/Specs/Refactor/MG-01-reconcile-Spec.md` ↔ CLAUDE.md (Rebuild/ empty). | Re-run **Refactor-Reconcile-Spec** (arch owner) to correct the source path citation. |
 | **A2** | Stack consistency (Low) | §2 lists the UI-app technology as "React, Tailwind CSS, microanimation, responsive UI" (verbatim Config), but the UI spec's as-built decision drops Tailwind for `bfsi-theme.css` classes and uses JS/JSX (UI §11/§13). The architecture does not acknowledge that deviation. | Architecture §2 (Tailwind) ↔ UI §11 build note & §13 (no Tailwind; JSX). | Note the front-end deviation (or reference UI §13) so the architecture reflects the real stack. |
 | **A3** | Contract consistency (Med) | The architecture's write data-flow (§3) already assumes the E4 "200 envelope (`changed`/`code`)", i.e. it agrees with reconcile G2 — which makes the **backend spec the lone outlier** (see C1). The architecture is correct; this reinforces that C1's fix is a backend-spec propagation, not an architecture change. | Architecture §3 write flow ("200 envelope (changed/code)") ↔ Reconcile G2 ↔ Backend §3.1/§3.2 (missing envelope). | No architecture change; use as corroboration when applying **C1** to the backend spec. |
 | **A4** | Right-sizing / open decisions (Low) | The architecture is well right-sized for one reference table (single stateless service, no cache/queue/event — correctly excluded per Backend §1.3) and is not over-engineered. The API gateway is Config-mandated ("REST APIs, API gateway"); for a single admin screen it is heavier than strictly necessary but justified by Config, and §7.4 appropriately defers the gateway product and scope-enforcement location. Open decisions §7 (G7 routes, G8 scope, repo choice) are all non-blocking and defensible. | Architecture §1–§2, §7; Backend §1.3 (no TSQ/TDQ/VSAM/MQ); Config "Microservice-based" / "API gateway". | No change required. Confirm G7/G8 are wired as single named constants (as §7 implies) so later swaps are trivial. |

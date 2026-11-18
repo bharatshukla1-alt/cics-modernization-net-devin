@@ -4,6 +4,7 @@ CICS Modernization Pipeline Runner for Devin IDE
 Orchestrates the 9-phase modernization pipeline with automated human review gate checks.
 """
 
+import glob
 import os
 import sys
 import argparse
@@ -41,6 +42,33 @@ def check_gate(gate_name, auto_approve=False):
         print(f"[-] {gate_name} not approved. Pausing pipeline. Re-run after addressing feedback.")
         return False
 
+EXPECTED_OUTPUTS = {
+    1: ["Artefacts/Discovery/TransVsPgm.md", "Artefacts/Discovery/CicsXref.md", "Artefacts/Discovery/Screen-metadata.md"],
+    2: ["Artefacts/Review/ReviewGate1.md"],
+    3: ["Artefacts/Discovery/MoveGroup.md"],
+    4: ["Artefacts/TranGroupData/{group}-*-BDD.md", "Artefacts/TranGroupData/{group}-*-BSTS.md"],
+    5: ["Artefacts/TranGroupData/{group}-*-DB-Details.md", "Artefacts/Database/{group}-*-DB-Status.md"],
+    6: ["Artefacts/Specs/Refactor/{group}-UI-Spec.md", "Artefacts/Specs/Refactor/{group}-Backend-Spec.md",
+        "Artefacts/Specs/Refactor/{group}-reconcile-Spec.md", "Target/{group}"],
+    7: ["Artefacts/Review/{group}-ReviewGate2.md"],
+    8: ["Artefacts/QA/Test Case/{group}-Refactor-TestCase.md", "Artefacts/QA/Test Result/{group}-Refactor-TestResult.md"],
+    9: ["Artefacts/Code Quality & Security/{group}-Security-Review.md",
+        "Artefacts/Code Quality & Security/{group}-CodeQuality-Review.md"],
+}
+
+
+def check_outputs(num, group):
+    missing = []
+    for pattern in EXPECTED_OUTPUTS.get(num, []):
+        if "{group}" in pattern and not group:
+            missing.append(pattern + " (pass --group)")
+            continue
+        path = pattern.format(group=group)
+        if not glob.glob(path):
+            missing.append(path)
+    return missing
+
+
 def run_phase(phase_info, group=None, auto_approve=False):
     num = phase_info["num"]
     name = phase_info["name"]
@@ -57,10 +85,15 @@ def run_phase(phase_info, group=None, auto_approve=False):
         print(f"[-] Playbook file not found: {pb_path}")
         return False
     
-    print(f"[+] Executing playbook {pb}...")
-    # Simulated execution hook for Devin IDE / CLI
-    print(f"[+] Completed playbook steps for Phase {num}.")
-    
+    print(f"[*] Agents run by Devin from {pb_path}; this runner checks their outputs.")
+    missing = check_outputs(num, group)
+    if missing:
+        for path in missing:
+            print(f"[-] Missing expected output: {path}")
+        print(f"[-] Phase {num} incomplete - run the playbook in Devin, then re-run this phase.")
+        return False
+    print(f"[+] Phase {num} outputs present.")
+
     if gate:
         approved = check_gate(gate, auto_approve=auto_approve)
         if not approved:

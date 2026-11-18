@@ -13,10 +13,10 @@ public class TransactionTypeContext : DbContext
     {
         modelBuilder.Entity<TransactionType>(entity =>
         {
-            entity.ToTable("TRANSACTION_TYPE");
+            entity.ToTable("transaction_type");
             entity.HasKey(e => e.TypeCode);
-            entity.Property(e => e.TypeCode).HasColumnName("TR_TYPE").HasMaxLength(2).IsFixedLength();
-            entity.Property(e => e.Description).HasColumnName("TR_DESCRIPTION").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.TypeCode).HasColumnName("tr_type").HasMaxLength(2).IsFixedLength();
+            entity.Property(e => e.Description).HasColumnName("tr_description").HasMaxLength(50).IsRequired();
         });
     }
 }

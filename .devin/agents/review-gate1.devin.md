@@ -37,8 +37,8 @@ d. **Other discrepancies** — anything else that doesn't fit a–c (duplicates,
 
 Only report a discrepancy you can point to with a specific file path and line/section on both sides of the comparison. Do not infer a mismatch you cannot cite.
 
-## Step 3: Write Gate1.md
-Create Artefacts/Review/Review-Gate1.md with this structure:
+## Step 3: Write `Artefacts/Review/ReviewGate1.md`
+Create Artefacts/Review/ReviewGate1.md with this structure:
 
 # Gate 1 Review — [date]
 ## Summary
@@ -55,6 +55,6 @@ Use a table per finding: Component | Found In | Expected In | Detail.
 If a subsection has no findings, write "No discrepancies found." — do not omit the heading.
 
 ## Constraints
-- Only read files under input/. Only write Artefacts/Review/Review-Gate1.md. Do not modify any other file.
+- Only read files under Input/ and Artefacts/Discovery/. Only write Artefacts/Review/ReviewGate1.md. Do not modify any other file.
 - Do not fabricate a discrepancy you cannot trace to a specific location on both sides.
 - If a file is unreadable or a component type is ambiguous, log it under "Other discrepancies" rather than skipping it silently.

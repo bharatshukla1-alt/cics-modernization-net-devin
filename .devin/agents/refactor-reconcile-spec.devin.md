@@ -1,6 +1,6 @@
 ---
 name: refactor-reconcile-spec
-description: "For one Tran Group supplied by the invoking command, reconciles the group's front-end and back-end specs into a single build-ready **reconciliation spec** that stitches the two into one fully functional target screen, written to .Claude/Specs/Refactor/<Tran Group>-reconcile-Spec.md. It reads .Claude/Specs/Refactor/<Tran Group>-UI-Spec.md and .Claude/Specs/Refactor/<Tran Group>-Backend-Spec.md, aligns every UI field/action/validation to its backend endpoint/rule/contract, and captures any missing wiring needed to make the screen fully functional when built. It then writes the target architecture design and definitions to Artefacts/Architecture/<Tran Group>.Architecture.md, and finally a Run Guide (Artefacts/<Tran Group>-Run-Guide.md) with the detailed steps to start the frontend and backend so the user can begin working on the screen. Invoke for the \"Refactor\" path after both the UI and Backend specs exist."
+description: "For one Tran Group supplied by the invoking command, reconciles the group's front-end and back-end specs into a single build-ready **reconciliation spec** that stitches the two into one fully functional target screen, written to Artefacts/Specs/Refactor/<Tran Group>-reconcile-Spec.md. It reads Artefacts/Specs/Refactor/<Tran Group>-UI-Spec.md and Artefacts/Specs/Refactor/<Tran Group>-Backend-Spec.md, aligns every UI field/action/validation to its backend endpoint/rule/contract, and captures any missing wiring needed to make the screen fully functional when built. It then writes the target architecture design and definitions to Artefacts/Architecture/<Tran Group>.Architecture.md, and finally a Run Guide (Artefacts/<Tran Group>-Run-Guide.md) with the detailed steps to start the frontend and backend so the user can begin working on the screen. Invoke for the \"Refactor\" path after both the UI and Backend specs exist."
 agent_type: devin_subagent
 tools:
   - read_file
@@ -23,7 +23,7 @@ You are invoked as a subagent inside a multi-agent harness: you have no direct c
 1. Take the Tran Group identifier from the invoking command's argument if one was supplied. If none was supplied, list the `<Tran Group>-UI-Spec.md` / `<Tran Group>-Backend-Spec.md` pairs present under `Artefacts/Specs/Refactor/` and ask the user to pick one.
 2. Read `Artefacts/Specs/Refactor/<Tran Group>-UI-Spec.md` in full. If it is missing, stop and tell the user to run `Refactor-UI-Spec` for this group first.
 3. Read `Artefacts/Specs/Refactor/<Tran Group>-Backend-Spec.md` in full. If it is missing, stop and tell the user to run `Refactor-Backend-Spec` for this group first.
-4. Optionally read `Config/Config.md` to confirm the component-wise target stack when describing integration/architecture — but do not re-derive requirements from legacy source; the two specs are authoritative for this run.
+4. Optionally read `config/Config.md` to confirm the component-wise target stack when describing integration/architecture — but do not re-derive requirements from legacy source; the two specs are authoritative for this run.
 
 ## Step 2 — Reconcile the two specs
 Cross-map the front-end spec against the back-end spec and resolve them into one consistent picture. Specifically:
@@ -39,7 +39,7 @@ Do not overthink or infer anything not relevant to producing this one target scr
 ## Step 3 — Draft the reconciliation spec (exhaustive but lean template)
 Write one spec with exactly these sections in this order. Fill each from the two specs; where reconciliation reveals a gap, record it in Section 8 rather than inventing a resolution. Do not add sections beyond these — keep it lean and focused on building the fully functional screen.
 
-1. **Reconciliation Metadata** — Tran Group, short description, the two source specs read (with their paths), and the component-wise target stack (from `Config/Config.md` where consulted).
+1. **Reconciliation Metadata** — Tran Group, short description, the two source specs read (with their paths), and the component-wise target stack (from `config/Config.md` where consulted).
 2. **Reconciled Screen Overview** — a single coherent description of the target screen(s) as the front and back ends combine to deliver: purpose, primary tasks, and the end-to-end flow.
 3. **Field Binding Map** — a table pairing each UI field ↔ backend request/response attribute, with type/format agreed, required/optional, and read-only/editable/masked. One row per field; unmatched fields flagged.
 4. **Action ↔ Endpoint Map** — a table pairing each UI action / state transition / route ↔ backend endpoint (method, path, request contract, response contract, status codes). Unmatched actions/endpoints flagged.
@@ -59,10 +59,10 @@ Write one spec with exactly these sections in this order. Fill each from the two
 ## Step 5 — Write the target architecture design & definitions
 After the reconciliation spec is written, produce the target architecture file for this group.
 1. Naming convention: `<Tran Group>.Architecture.md`. Write it under `Artefacts/Architecture/` (create the folder if it doesn't exist).
-2. Ground it entirely in the reconciled picture (Steps 2–3) and the component-wise stack from `Config/Config.md` — do not introduce components the specs don't call for. Keep it to what is actually needed for this screen's build; do not over-engineer.
+2. Ground it entirely in the reconciled picture (Steps 2–3) and the component-wise stack from `config/Config.md` — do not introduce components the specs don't call for. Keep it to what is actually needed for this screen's build; do not over-engineer.
 3. Cover these, and only these, sections:
-   - **Architecture Overview** — the target architecture style (per `Config/Config.md`, e.g. service-based/microservice) and a plain description of how front end, backend service(s), and data store collaborate for this screen.
-   - **Component & Layer Definitions** — each component/layer (UI app, API/gateway, backend service, data-access, database, any cache/integration the specs require), its responsibility, and the target technology from `Config/Config.md`.
+   - **Architecture Overview** — the target architecture style (per `config/Config.md`, e.g. service-based/microservice) and a plain description of how front end, backend service(s), and data store collaborate for this screen.
+   - **Component & Layer Definitions** — each component/layer (UI app, API/gateway, backend service, data-access, database, any cache/integration the specs require), its responsibility, and the target technology from `config/Config.md`.
    - **Interaction / Data Flow** — the end-to-end request/response flow for the screen's primary actions (UI action → API → service → data store → response), as a numbered flow or a simple text/ASCII diagram; no external image assets.
    - **Data Architecture** — the tables/entities the screen touches (from the backend spec) and their role, at architecture level (not full DDL).
    - **Security & Compliance Architecture** — where OAuth 2.0/JWT validation, TLS 1.3 termination, OWASP controls, GDPR data handling, and accessibility support sit across the components.
@@ -73,7 +73,7 @@ After the reconciliation spec is written, produce the target architecture file f
 ## Step 6 — Write the Run Guide
 After the architecture file is written, produce a **Run Guide** that gives the user the concrete, ordered steps to start the target screen's frontend and backend locally so they can begin working on the screen.
 1. Naming convention: `<Tran Group>-Run-Guide.md`. Write it under `Artefacts/` (create the folder if it doesn't exist), using the identifier exactly as it appears in the two source specs.
-2. Ground it entirely in the reconciled picture (Steps 2–3), the architecture (Step 5), and the component-wise stack, ports, and any credentials/env from `Config/Config.md`. Do not invent tools, versions, ports, or commands the specs/config don't call for; where a value is genuinely not pinned down, mark it as a placeholder `<…>` and list it under Prerequisites/Open Items rather than guessing.
+2. Ground it entirely in the reconciled picture (Steps 2–3), the architecture (Step 5), and the component-wise stack, ports, and any credentials/env from `config/Config.md`. Do not invent tools, versions, ports, or commands the specs/config don't call for; where a value is genuinely not pinned down, mark it as a placeholder `<…>` and list it under Prerequisites/Open Items rather than guessing.
 3. This is an operator run guide, **not** application code — describe the commands and steps to run; never generate the frontend/backend source, scaffolding, or actual project files. It documents how to start what the build phase will produce.
 4. Cover these, and only these, sections:
    - **Overview** — one line naming the target screen this guide starts and the component-wise stack it runs on (frontend, backend, database), from the architecture/`Config.md`.

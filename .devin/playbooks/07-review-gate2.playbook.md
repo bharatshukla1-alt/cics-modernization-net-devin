@@ -27,7 +27,7 @@ If any is missing, stop and report which — do not run the review-gate2.devin.m
 
 ## Step 3: Run the review-gate2.devin.md agent
 
-Invoke the **review-gate2.devin.md** subagent, passing the Tran Group identifier resolved in Step 1. The agent owns its own context-building (scanning `Input/`, the group's BSTS/BDD/DB artefacts, `Config/Config.md`, and `DEVIN.md`), its review logic, and its file-naming/write scope — do not re-specify that here.
+Invoke the **review-gate2.devin.md** subagent, passing the Tran Group identifier resolved in Step 1. The agent owns its own context-building (scanning `Input/`, the group's BSTS/BDD/DB artefacts, `config/Config.md`, and `DEVIN.md`), its review logic, and its file-naming/write scope — do not re-specify that here.
 
 The agent writes `Artefacts/Review/<Tran Group>-ReviewGate2.md` with findings grouped as **Critical Gaps**, **Good to Have**, and **Advanced Suggestions**, plus a separate **Architecture Recommendations** section.
 

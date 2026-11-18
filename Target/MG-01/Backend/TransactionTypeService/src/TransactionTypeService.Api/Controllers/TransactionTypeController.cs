@@ -10,7 +10,7 @@ namespace TransactionTypeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/transaction-types")]
-// [Authorize]
+[Authorize]
 public class TransactionTypeController : ControllerBase
 {
     private readonly ITransactionTypeService _service;
@@ -30,7 +30,7 @@ public class TransactionTypeController : ControllerBase
     /// <param name="size">Number of items per page.</param>
     /// <returns>A paginated list of transaction types.</returns>
     [HttpGet]
-    // [Authorize(Policy = "ReadAccess")]
+    [Authorize(Policy = "ReadAccess")]
     public async Task<IActionResult> GetTransactionTypes(
         [FromQuery] string? typeCode,
         [FromQuery] string? description,
@@ -48,7 +48,7 @@ public class TransactionTypeController : ControllerBase
     /// <param name="typeCode">The type code of the transaction type to retrieve.</param>
     /// <returns>The requested transaction type.</returns>
     [HttpGet("{typeCode}")]
-    // [Authorize(Policy = "ReadAccess")]
+    [Authorize(Policy = "ReadAccess")]
     public async Task<IActionResult> GetTransactionType(string typeCode)
     {
         var result = await _service.GetTransactionTypeAsync(typeCode);
@@ -61,7 +61,7 @@ public class TransactionTypeController : ControllerBase
     /// <param name="request">The request containing transaction type details.</param>
     /// <returns>The created transaction type.</returns>
     [HttpPost]
-    // [Authorize(Policy = "AdminAccess")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> CreateTransactionType([FromBody] CreateTransactionTypeRequest request)
     {
         var result = await _service.CreateTransactionTypeAsync(request);
@@ -75,7 +75,7 @@ public class TransactionTypeController : ControllerBase
     /// <param name="request">The request containing updated details.</param>
     /// <returns>The updated transaction type and status.</returns>
     [HttpPut("{typeCode}")]
-    // [Authorize(Policy = "AdminAccess")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> UpdateTransactionType(string typeCode, [FromBody] UpdateTransactionTypeRequest request)
     {
         var (dto, changed) = await _service.UpdateTransactionTypeAsync(typeCode, request);
@@ -106,7 +106,7 @@ public class TransactionTypeController : ControllerBase
     /// <param name="typeCode">The type code of the transaction type to delete.</param>
     /// <returns>No content if successful.</returns>
     [HttpDelete("{typeCode}")]
-    // [Authorize(Policy = "AdminAccess")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> DeleteTransactionType(string typeCode)
     {
         await _service.DeleteTransactionTypeAsync(typeCode);

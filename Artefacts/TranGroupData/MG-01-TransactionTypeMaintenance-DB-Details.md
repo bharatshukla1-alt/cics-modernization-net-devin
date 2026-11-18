@@ -12,7 +12,7 @@ Dialect: postgresql
 Mapping rule: PostgreSQL qualifier mapping: DB2 `<database>.<table>` qualifier is dropped; the table is created unqualified in the target Postgres database's default `public` schema.
 
 ```sql
--- Source: input/ctl/DB2CREAT.ctl, input/ddl/TRNTYPE.ddl, input/dcl/DCLTRTYP.dcl
+-- Source: Input/ctl/DB2CREAT.ctl, Input/ddl/TRNTYPE.ddl, Input/dcl/DCLTRTYP.dcl
 CREATE TABLE TRANSACTION_TYPE
 (
     TR_TYPE CHAR(2) NOT NULL,
@@ -26,7 +26,7 @@ CREATE UNIQUE INDEX XTRAN_TYPE
 
 ## c. Seed Data
 ```sql
--- Source: input/ctl/DB2LTTYP.ctl
+-- Source: Input/ctl/DB2LTTYP.ctl
 INSERT INTO TRANSACTION_TYPE (TR_TYPE, TR_DESCRIPTION) VALUES
 ('01', 'PURCHASE'),
 ('02', 'PAYMENT'),
@@ -40,7 +40,7 @@ INSERT INTO TRANSACTION_TYPE (TR_TYPE, TR_DESCRIPTION) VALUES
 ## Gaps
 1. **Tables with no source definition:** None
 2. **CREATE DATABASE statement:**
-   `CREATE DATABASE CARDDEMO` was found in `input/ctl/DB2CREAT.ctl`. (Not executed).
+   `CREATE DATABASE CARDDEMO` was found in `Input/ctl/DB2CREAT.ctl`. (Not executed).
 3. **Table-level Privileges:**
-   - `GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE CARDDEMO.TRANSACTION_TYPE TO PUBLIC;` found in `input/ctl/DB2CREAT.ctl`. Note: No equivalent `GRANT` was executed in the target database. DBA/admin should review and apply role-based grants.
+   - `GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE CARDDEMO.TRANSACTION_TYPE TO PUBLIC;` found in `Input/ctl/DB2CREAT.ctl`. Note: No equivalent `GRANT` was executed in the target database. DBA/admin should review and apply role-based grants.
 4. **Dialect-specific precision loss:** None

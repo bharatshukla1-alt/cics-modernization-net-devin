@@ -16,7 +16,7 @@
 // --query runs one ad-hoc statement (SELECT, or a write with rows to inspect) and prints
 // the result rows as JSON — the direct-script replacement for an MCP read_query/write_query.
 //
-// --dialect also accepts the plain tech-stack-mapping names used in Config/Config.md
+// --dialect also accepts the plain tech-stack-mapping names used in config/Config.md
 // (Postgres, MySQL, SQL Server, SQLite, Oracle) — normalized case/whitespace-insensitively.
 //
 // Env vars (all optional except what the dialect needs):

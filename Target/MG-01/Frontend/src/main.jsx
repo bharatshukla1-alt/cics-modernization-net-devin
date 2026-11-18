@@ -9,11 +9,28 @@ import './styles/app.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// Simple bypass for local development testing without Keycloak
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+function renderApp() {
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+}
+
+initKeycloak()
+  .then((authenticated) => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    setSessionExpiredHandler(() => {
+      keycloak.clearToken();
+      login();
+    });
+    renderApp();
+  })
+  .catch(() => {
+    root.render(<p role="alert">Unable to reach the sign-in service. Please try again later.</p>);
+  });

@@ -10,14 +10,14 @@ auto_proceed_on_success: true
 ## Step 1: Confirm the input artefact exists and resolve which group to process
 
 Check for the presence of:
-- Artefacts\Discovery\MoveGroup.md
+- Artefacts/Discovery/MoveGroup.md
 
-If it is missing, stop immediately and report that it's missing — do not run either subagent without it. Suggest re-running `/Create-Group` first.
+If it is missing, stop immediately and report that it's missing — do not run either subagent without it. Suggest re-running `Phase 3 (`.devin/playbooks/03-move-group.playbook.md`)` first.
 
 This command processes **one Trans Group per run**, never the whole file at once. Resolve the target group:
 - If a Trans Group identifier (e.g. `MG-01`) was provided as an argument to this command, use it.
-- If none was provided, read the distinct `Trans Group` values out of `Artefacts/MoveGroup.md` and ask the user which one to process this run. If the user has already confirmed a conversion order during `/03-MoveGroup`, ask for the **next** group in that confirmed sequence rather than treating the list as unordered. Do not default to running all of them.
-- If the identifier given doesn't match any `Trans Group` value in `Artefacts/MoveGroup.md`, stop and report the mismatch, listing the valid identifiers found in the file.
+- If none was provided, read the distinct `Trans Group` values out of `Artefacts/Discovery/MoveGroup.md` and ask the user which one to process this run. If the user has already confirmed a conversion order during `/03-MoveGroup`, ask for the **next** group in that confirmed sequence rather than treating the list as unordered. Do not default to running all of them.
+- If the identifier given doesn't match any `Trans Group` value in `Artefacts/Discovery/MoveGroup.md`, stop and report the mismatch, listing the valid identifiers found in the file.
 
 ## Step 2: Run tran-group-bdd.devin.md and tran-group-bsts.devin.md in parallel
 

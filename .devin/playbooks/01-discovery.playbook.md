@@ -7,23 +7,23 @@ gate: "Human Review Gate 1"
 auto_proceed_on_success: false
 ---
 
-## Step 1: Check for the presence of CicsXref.md,TransVsPgm.md and Screnn-metadata.md files
-When the agent is invoked for the first time, it would check the presence of CicsXref.md,TransVsPgm.md and Screnn-metadata.md files in /Artefacts folder. If these files are present, then will get deleted, else the agent will continue with Step 2
+## Step 1: Check for the presence of CicsXref.md,TransVsPgm.md and Screen-metadata.md files
+When the playbook runs, check for `CicsXref.md`, `TransVsPgm.md` and `Screen-metadata.md` in `Artefacts/Discovery/`. If any are present, delete only those three files so this run regenerates them; never delete any other file under `Artefacts/`.
 
 ## Step 2: Locate the CSD file
 
 Use the CSD file path provided as an argument, or default to:
-Input\csd\
+Input/csd/
 
 If the file cannot be found at the given path, stop immediately and report the exact error. Do not proceed to analysis.
 
 ## Step 3: Run Task 1 — Transaction-to-Program mapping
 
 Using the discovery-agent.devin.md subagent, perform **Task 1 only** (Transaction-to-Program mapping from a CICS CSD file — do not run Task 2 or Task 3), and analyze this file:
-Input\csd\CRDDEMOD.csd
+Input/csd/CRDDEMOD.csd
 
 Save the resulting table to:
-Artefacts\Discovery\TransVsPgm.md
+Artefacts/Discovery/TransVsPgm.md
 
 Rules:
 - Create the `Artefacts` folder if it doesn't exist.
@@ -32,18 +32,18 @@ Rules:
 - The output table must use exactly these columns: `Transaction ID | Program Name | CICS Group`.
 - Do not infer or invent transaction/program pairs — only state relationships verifiable from the file content.
 
-If this step fails or produces no rows, stop and report the error — do not proceed to Step 3.
+If this step fails or produces no rows, stop and report the error — do not proceed to Step 5.
 
 ## Step 4: Run Task 2 — Build the CICS cross-reference (CicsXref.md)
 
 Using the discovery-agent.devin.md subagent, perform **Task 2 only** (build the CicsXref cross-reference — do not run Task 1 or Task 3).
 
 Inputs:
-- `Artefacts\Discovery\TransVsPgm.md` — the transaction/program pairs produced in Step 2, to use as the full list of programs to process.
-- `Input\cbl\` — COBOL source folder, one file per program named in `TransVsPgm.md`.
+- `Artefacts/Discovery/TransVsPgm.md` — the transaction/program pairs produced in Step 3, to use as the full list of programs to process.
+- `Input/cbl/` — COBOL source folder, one file per program named in `TransVsPgm.md`.
 
 Save the resulting table to:
-Artefacts\Discovery\CicsXref.md
+Artefacts/Discovery/CicsXref.md
 
 Rules:
 - If `TransVsPgm.md` is missing, stop and report the error — do not proceed without it.
@@ -52,22 +52,22 @@ Rules:
 - The output table must use exactly these columns, in this order: `Transaction | Program | Short Program Description | Called Programs | Called Transactions | Map & Mapset Used | Commarea Copybook | VSAM Files Accessed (CRUD) | DB2 Tables Accessed (CRUD) | CICS TS (TSQ/TDQ) Used (CRUD) | Copybooks Used`.
 - If a program's source file is missing or unparseable in `input\cbl\`, report it clearly and continue with the remaining programs rather than stopping or fabricating data.
 
-If `TransVsPgm.md` cannot be read, stop and report the error — do not proceed to Step 4.
+If `TransVsPgm.md` cannot be read, stop and report the error — do not proceed to Step 5.
 
 ## Step 5: Run Task 3 — Generate screen metadata
 
 Using the discovery-agent.devin.md subagent, perform **Task 3 only** (generate BMS screen metadata — do not run Task 1 or Task 2).
 
 Inputs:
-- `Artefacts\Discovery\CicsXref.md` — the Program → Mapset cross-reference produced in Step 3.
-- `Input\bms\` — BMS copybook source folder; process every `.cpy`/`.bms` file in it.
+- `Artefacts/Discovery/CicsXref.md` — the Program → Mapset cross-reference produced in Step 4.
+- `Input/bms/` — BMS copybook source folder; process every `.cpy`/`.bms` file in it.
 
 Save the result to:
-Artefacts\Screen-metadata.md
+Artefacts/Discovery/Screen-metadata.md
 
 Rules:
 - If `CicsXref.md` is missing, stop and report the error — do not proceed without it.
-- Do not modify any source files in `input\cpy-bms\` or any other file in `Artefacts\` besides `Screen-metadata.md`.
+- Do not modify any source files in `input\cpy-bms\` or any other file in `Artefacts/` besides `Screen-metadata.md`.
 -Process bms copybooks in small batches (3–5 at a time), reading and reasoning about each bms copybook source individually — no automated parsing scripts, regex, or heuristics
 - One section per mapset (H2 heading with mapset name and source copybook filename), each with a table of columns `Field Name | Field Initial | Field Length | Field Type | Field Attribute`.
 - If a copybook's mapset isn't found in `CicsXref.md`, still process its fields but flag the mapset as `UNMAPPED - <copybook filename>`.

@@ -12,10 +12,10 @@ The repository is organized around four major concerns:
    Legacy assets live under `Input/` and are treated as read-only. These include BMS maps, COBOL programs, copybooks, CSD definitions, DB2 DDL/DCL, control files, and related migration inputs.
 
 2. Command and agent orchestration
-   The workflow logic is defined in `.Claude/Commands/` and `.Claude/Agents/`. Commands represent pipeline phases. Agents own the detailed logic for discovery, grouping, specification generation, DB setup, testing, and review.
+   The workflow logic is defined in `.devin/playbooks/` and `.devin/agents/`. Commands represent pipeline phases. Agents own the detailed logic for discovery, grouping, specification generation, DB setup, testing, and review.
 
 3. Generated artefacts and target outputs
-   Artefacts created by the workflow are written under `Artefacts/`, `.Claude/Specs/Refactor/`, and `Target/`. These are outputs of the modernization process and should be understood as generated or generated-assisted deliverables.
+   Artefacts created by the workflow are written under `Artefacts/`, `Artefacts/Specs/Refactor/`, and `Target/`. These are outputs of the modernization process and should be understood as generated or generated-assisted deliverables.
 
 4. Database tooling and adapters
    Target-database provisioning and inspection are handled through `tools/db-apply.mjs` and the vendored adapter implementation under `db-adapters/`.
@@ -58,13 +58,13 @@ Key top-level folders:
 - `Input/`
   Read-only legacy source materials used as the ground truth for modernization.
 
-- `.Claude/Commands/`
+- `.devin/playbooks/`
   Pipeline-phase command definitions that orchestrate the workflow.
 
-- `.Claude/Agents/`
+- `.devin/agents/`
   Specialized agent instructions for each phase or subtask.
 
-- `.Claude/Specs/Refactor/`
+- `Artefacts/Specs/Refactor/`
   Generated build specifications for the Refactor path.
 
 - `Artefacts/`
@@ -104,18 +104,18 @@ The target stack is intentionally driven by configuration rather than by hardcod
 
 To work with this repository effectively:
 
-1. Start from the command and agent definitions under `.Claude/Commands/` and `.Claude/Agents/`.
+1. Start from the command and agent definitions under `.devin/playbooks/` and `.devin/agents/`.
 2. Use `CLAUDE.md` for the end-to-end workflow contract and architecture-level rules.
 3. Use `config/Config.md` for target technology mapping.
-4. Treat artefacts under `Artefacts/` and specs under `.Claude/Specs/Refactor/` as generated outputs from pipeline execution.
+4. Treat artefacts under `Artefacts/` and specs under `Artefacts/Specs/Refactor/` as generated outputs from pipeline execution.
 
 ## Notes for Contributors
 
 This repository currently contains generated and vendored content, including target application outputs and adapter code. Changes to repository-level workflow behavior should generally be made in:
 
 - `CLAUDE.md`
-- `.Claude/Commands/`
-- `.Claude/Agents/`
+- `.devin/playbooks/`
+- `.devin/agents/`
 - `config/Config.md`
 - `tools/`
 
