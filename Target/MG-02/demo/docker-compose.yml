@@ -1,0 +1,86 @@
+# MG-02 demo: PostgreSQL (MG-01 + MG-02 schemas) -> SignOnService + TransactionTypeService -> CardDemo shell UI.
+# Start with ./start-demo.sh (creates demo/.env with random local passwords on first run).
+name: carddemo-mg02
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: carddemo
+      POSTGRES_USER: carddemo
+      POSTGRES_PASSWORD: ${CARDDEMO_DB_PASSWORD:?run ./start-demo.sh or set it in demo/.env}
+      CARDDEMO_APP_PASSWORD: ${CARDDEMO_APP_PASSWORD:?run ./start-demo.sh}
+      CARDDEMO_SIGNON_PASSWORD: ${CARDDEMO_SIGNON_PASSWORD:?run ./start-demo.sh}
+    volumes:
+      - ../../../Artefacts/DDL/MG-01-TransactionTypeMaintenance-schema.sql:/docker-entrypoint-initdb.d/01-mg01-schema.sql:ro
+      - ../../../Artefacts/DDL/MG-02-SignOnAndNavigationShell-vsam-schema.sql:/docker-entrypoint-initdb.d/02-mg02-schema.sql:ro
+      - ./db-init/03-roles.sh:/docker-entrypoint-initdb.d/03-roles.sh:ro
+      - ../../MG-01/Backend/db/least-privilege-app-role.sql:/docker-entrypoint-initdb.d/sql/least-privilege-app-role.sql:ro
+      - ../Backend/db/least-privilege-signon-role.sql:/docker-entrypoint-initdb.d/sql/least-privilege-signon-role.sql:ro
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carddemo -d carddemo"]
+      interval: 3s
+      retries: 20
+
+  signon:
+    build: ../Backend/SignOnService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5001
+      Auth__Issuer: http://signon:5001
+      Auth__SigningKeyPath: /keys/signon.pem
+      ForwardedHeaders__KnownProxies__0: 172.28.0.10
+      RateLimit__SignInPerMinute: ${SIGNON_RATE_LIMIT:-5}
+      AllowedHosts: "localhost;signon"
+      ConnectionStrings__SignOn: Host=db;Port=5432;Database=carddemo;Username=carddemo_signon;Password=${CARDDEMO_SIGNON_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./keys:/keys:ro
+    ports:
+      - "${SIGNON_PORT:-5001}:5001"
+
+  api:
+    build: ../../MG-01/Backend/TransactionTypeService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      Auth__DevBypass: "false"
+      Auth__Authority: http://signon:5001
+      Auth__Audience: carddemo-api
+      AllowedHosts: "localhost;api"
+      ConnectionStrings__CardDemo: Host=db;Port=5432;Database=carddemo;Username=carddemo_app;Password=${CARDDEMO_APP_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      signon:
+        condition: service_started
+    ports:
+      - "${API_PORT:-5000}:5000"
+
+  ui:
+    build:
+      context: ../..
+      dockerfile: MG-02/Frontend/Dockerfile.demo
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:20-alpine}
+    environment:
+      SIGNON_PROXY_TARGET: http://signon:5001
+      API_PROXY_TARGET: http://api:5000
+    depends_on:
+      - signon
+      - api
+    networks:
+      default:
+        ipv4_address: 172.28.0.10
+    ports:
+      - "${UI_PORT:-5173}:5173"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

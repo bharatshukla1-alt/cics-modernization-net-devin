@@ -1,0 +1,11 @@
+# Demo image: Vite dev server with the /api proxies (local demos only). Build context: Target/ (needs MG-01 and MG-03 sources).
+ARG NODE_IMAGE=node:20-alpine
+FROM ${NODE_IMAGE}
+WORKDIR /app/MG-02/Frontend
+COPY MG-02/Frontend/package.json MG-02/Frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY MG-01/Frontend/src /app/MG-01/Frontend/src
+COPY MG-03/Frontend/src /app/MG-03/Frontend/src
+COPY MG-02/Frontend/ ./
+EXPOSE 5173
+CMD ["npx", "vite", "--host", "0.0.0.0"]

@@ -1,92 +1,120 @@
-# MG-01-reconcile-Spec.md
+# MG-01 — Reconciliation Spec (Refactor)
 
 ## 1. Reconciliation Metadata
-- **Tran Group**: MG-01
-- **Short Description**: Transaction type maintenance — list, add, update, delete
-- **Source Specs Read**: 
-  - `Artefacts/Specs/Refactor/MG-01-UI-Spec.md`
-  - `Artefacts/Specs/Refactor/MG-01-Backend-Spec.md`
-- **Target Stack**: React, Tailwind CSS, microanimation, Responsive UI, .NET Core 9 (C#) with ASP.NET Core Web API, Postgres, Oauth 2.0, HTTPS/TLS 1.3, Stateless REST + client-held state.
+- **Tran Group:** MG-01 — Transaction type maintenance (Db2) — list, filter, add, update, delete
+- **Specs reconciled:** `Artefacts/Specs/Refactor/MG-01-UI-Spec.md`, `Artefacts/Specs/Refactor/MG-01-Backend-Spec.md`
+- **Stack** (`config/Config.md`): React + Tailwind CSS (Vite, port 5173, `/api` proxy) → ASP.NET Core Web API on .NET 9 (C#, port 5000) → PostgreSQL (`carddemo`); OAuth 2.0 JWT; HTTPS/TLS 1.3; microservice-based.
 
 ## 2. Reconciled Screen Overview
-The Transaction Type List and Maintenance Details screens combine into a fully functional administrative workbench. The frontend uses a modern React application to browse, search, and page through transaction types, and offers single-record CRUD capabilities. The backend is a stateless .NET Core 9 REST API that enforces business rules and interacts with a Postgres database. The end-to-end flow is secured via OAuth 2.0 and TLS 1.3.
+Three screens served by one service. **S1 Transaction types** (`/transaction-types`) lists types 7 per page via E1, filters by code/description, edits a description in place (E4) and deletes a row (E5). **S2 Add** (`/transaction-types/new`) creates a type in one step (E3). **S3 Details** (`/transaction-types/:typeCode`) reads one type (E2), saves a new description (E4) or deletes it (E5). Every write is confirmed in a UI dialog, then validated again on the server and committed in its own transaction. Errors come back as ProblemDetails with `code`, `message` and field `errors`, which the UI shows in its error alert or under the field.
 
 ## 3. Field Binding Map
-| UI Field | Backend Attribute | Type/Format | Required/Optional | Access | Notes |
-|---|---|---|---|---|---|
-| Type Code Filter | `typeCode` (Query on E1) | string(2), numeric | Optional | Editable | Filter bar |
-| Description Filter | `description` (Query on E1) | string(≤50) | Optional | Editable | Filter bar |
-| Table Type Code | `typeCode` (Response from E1) | string(2) | Required | Read-only | List display |
-| Table Description | `description` (Response from E1) | string(≤50) | Required | Read-only | List display |
-| Detail Search Code | `typeCode` (Path/Body E2-E5) | string(2), numeric | Required | Editable/Read-only | Details card |
-| Detail Description | `description` (Body E3, E4) | string(≤50) | Required | Editable | Details card |
+| UI field (screen) | Backend attribute | Type / format | Req. | Mode |
+|---|---|---|---|---|
+| Type code filter (S1) | E1 query `typeCode` | 1–2 digits; ""/"0"/"00" = none | No | editable |
+| Description contains (S1) | E1 query `description` | text ≤ 50, case-sensitive contains | No | editable |
+| Page key (S1, hidden state) | E1 query `after` = current `lastCode` / `before` = current `firstCode` | 2 digits | No | client state |
+| Page N (S1) | — (client counter; reset to 1 on new search) | int | — | read-only |
+| Previous / Next enabled (S1) | E1 response `hasPrevious` / `hasNext` | bool | — | derived |
+| Table Code (S1) | E1 `items[].typeCode` | 2 digits | — | read-only |
+| Table Description (S1) | E1 `items[].description`; edit → E4 body `description` | text ≤ 50 | Yes on save | read-only / editable in edit mode |
+| No-match error (S1) | E1 `items=[]` and `filtered=true` | — | — | derived |
+| Empty state (S1) | E1 `items=[]` and `filtered=false` | — | — | derived |
+| Type code (S2) | E3 body `typeCode` (response normalised 2 digits) | 1–2 digits, ≠ 0 | Yes | editable |
+| Description (S2) | E3 body `description` | `^[A-Za-z0-9 ]{1,50}$` after trim | Yes | editable |
+| Type code (S3) | path `{typeCode}`, E2 `typeCode` | 2 digits | — | read-only |
+| Description (S3) | E2 `description`; E4 body `description` | as S2 | Yes | editable |
+| Look up another code (S3) | route param → E2 path | 1–2 digits | — | editable |
+| Error alert / field errors (all) | ProblemDetails `message`, `errors{field}`, `code`, `traceId` | — | — | read-only |
+
+No unmatched fields on either side.
 
 ## 4. Action ↔ Endpoint Map
-| UI Action | Backend Endpoint | Method/Path | Request | Response | Status Codes |
-|---|---|---|---|---|---|
-| Screen 1 Search / Clear | E1 | GET `/api/v1/transaction-types` | `typeCode`, `description` | `TransactionTypePageDto` | 200, 400, 401, 403, 503 |
-| Screen 1 Next / Previous | E1 | GET `/api/v1/transaction-types` | `direction`, `cursor`, `size=7` | `TransactionTypePageDto` | 200, 400, 401, 403, 503 |
-| Screen 1 Row Edit (Save) | E4 | PUT `/api/v1/transaction-types/{typeCode}` | `description`, `createIfMissing=false` | `TransactionTypeDto` | 200, 400, 401, 403, 404, 409, 500 |
-| Screen 1 Row Delete (Confirm) | E5 | DELETE `/api/v1/transaction-types/{typeCode}` | none | 204 | 204, 400, 401, 403, 404, 409, 500 |
-| Screen 2 Find | E2 | GET `/api/v1/transaction-types/{typeCode}` | none | `TransactionTypeDto` | 200, 400, 401, 403, 404, 500 |
-| Screen 2 Save changes (found) | E4 | PUT `/api/v1/transaction-types/{typeCode}` | `description`, `createIfMissing=true` | `TransactionTypeDto` | 200, 201, 400, 401, 403, 409, 500 |
-| Screen 2 Create record (not found) | E3 | POST `/api/v1/transaction-types` | `typeCode`, `description` | `TransactionTypeDto` | 201, 400, 401, 403, 409, 500 |
-| Screen 2 Delete (Confirm) | E5 | DELETE `/api/v1/transaction-types/{typeCode}` | none | 204 | 204, 400, 401, 403, 404, 409, 500 |
+| UI action / transition | Endpoint | Request | Success | Error statuses handled |
+|---|---|---|---|---|
+| S1 open / Clear | E1 `GET /api/v1/transaction-types` | `pageSize=7` | 200 page | 401, 403, 503 |
+| S1 Search | E1 | `typeCode`, `description`, `pageSize=7` | 200 | 400 `TYPE_FILTER_INVALID`, 503 |
+| S1 Next | E1 | filters + `after=lastCode` | 200, page+1 | 400, 503 |
+| S1 Previous | E1 | filters + `before=firstCode` | 200, page−1 | 400, 503 |
+| S1 row Save | E4 `PUT /api/v1/transaction-types/{code}` | `{ description }` | 200 → replace row, status "Transaction type {code} updated." | 400, 404, 409 `RECORD_LOCKED`, 422 `NO_CHANGES` |
+| S1 row Delete (after confirm) | E5 `DELETE /api/v1/transaction-types/{code}` | — | 204 → status "Transaction type {code} deleted.", reload page 1 (E1, no paging key, filters kept) | 404, 409 `HAS_DEPENDENT_RECORDS` |
+| S1 Add / code link | (navigation) | — | route change | — |
+| S2 Create (after confirm) | E3 `POST /api/v1/transaction-types` | `{ typeCode, description }` | 201 → navigate S1, status "Transaction type {code} created." | 400, 409 `TYPE_ALREADY_EXISTS` |
+| S3 open / Look up | E2 `GET /api/v1/transaction-types/{code}` | — | 200 | 400, 404 → not-found state |
+| S3 Save changes (after confirm) | E4 | `{ description }` | 200, status "Changes saved." | 400, 404, 409, 422 |
+| S3 Delete (after confirm) | E5 | — | 204 → navigate S1 with status | 404, 409 |
+| Any dialog Cancel | none | — | status "Nothing was changed." | — |
+| Back to admin menu | none (route `/admin`, MG-02) | — | — | — |
+
+Every endpoint E1–E5 has a UI caller; E6 `/health` is operational only (not a UI action — intended).
 
 ## 5. Validation Parity
-| UI Validation | Backend Validation | Error Code | Message |
+| Field | UI rule / message | Server rule / message | Status |
 |---|---|---|---|
-| Type code must be numeric | V4: numeric | `TYPE_CODE_NOT_NUMERIC` | "Transaction type code must be numeric." |
-| Type code must be supplied (Details) | V4: required | `TYPE_CODE_REQUIRED` | "Enter a transaction type code." |
-| Type code must not be zero | V4: non-zero | `TYPE_CODE_ZERO` | "Transaction type code cannot be zero." |
-| Type filter 2 chars alphanumeric (UI) | V1: exact 2 digits | `INVALID_TYPE_CODE_FILTER` | "Type code must be a 2-digit number." |
-| Description supplied (Details) | V5: required | `DESCRIPTION_REQUIRED` | "Enter a description." |
-| Description letters/numbers/spaces | V5: `^[A-Za-z0-9 ]+$` | `DESCRIPTION_INVALID_CHARS` | "Description can contain letters, numbers, and spaces only." |
-| Description max 50 chars | V5: max 50 | `DESCRIPTION_TOO_LONG` | "Description must be 50 characters or fewer." |
+| Type code filter | non-digit → "Type code must be a 2-digit number." | 400 `TYPE_FILTER_INVALID` same text | aligned |
+| Type code (S2) empty | "Type code is required." | "Type code is required." | aligned |
+| Type code non-numeric | "Type code must be numeric." | same | aligned |
+| Type code zero | "Type code must not be zero." | same | aligned |
+| Type code 1 digit | padded to 2 on submit | normalised to 2 digits | aligned |
+| Description empty | "Description is required." | same | aligned |
+| Description characters | "Description can contain only letters, numbers and spaces." | same, regex `^[A-Za-z0-9 ]+$` | aligned |
+| Description length | `maxLength=50` (cannot exceed) | "Description can be at most 50 characters." | aligned (server-only message reachable via API only) |
+| Description unchanged | Save disabled + hint "No changes to save." | 422 `NO_CHANGES` "No change detected with respect to database values." | aligned (server message shown if reached, e.g. stale page) |
+| Description filter length | `maxLength=50` | "Description filter can be at most 50 characters." | aligned |
 
 ## 6. Error & Edge-Case Parity
-| Backend Error/Edge Path | UI State/Message |
+| Backend path | UI presentation |
 |---|---|
-| DB unreachable (`SERVICE_UNAVAILABLE`) | "The service is temporarily unavailable. Please try again shortly." |
-| Record not found (E2 `TXN_TYPE_NOT_FOUND`) | UI prompts to create. "No record exists for this code." |
-| List UPDATE concurrent delete (`TXN_TYPE_CONCURRENTLY_DELETED`) | "This record was removed by someone else. Refresh and try again." |
-| Record re-created (E4 `201`) | "Transaction type created." |
-| Lock conflict (`TXN_TYPE_LOCK_CONFLICT`) | "This record is being changed by someone else. Try again shortly." |
-| Insert duplicate (`TXN_TYPE_ALREADY_EXISTS`) | "A transaction type with this code already exists." |
-| Delete has dependents (`TXN_TYPE_HAS_DEPENDENTS`) | "This transaction type is in use and cannot be deleted while related records exist." |
-| DB error (`TXN_TYPE_DB_ERROR`) | "Something went wrong. Please try again." |
-| Auth failure (`UNAUTHENTICATED`/`FORBIDDEN`) | "You are not authorized to perform this action." |
-| No change detected (`TXN_TYPE_NO_CHANGE`) | UI handles `changed:false` flag to show appropriate feedback (or suppress toast). |
+| 200 `items=[]`, `filtered=true` | S1 error alert "No transaction types match these filters.", filter fields `aria-invalid` |
+| 200 `items=[]`, `filtered=false` | S1 empty state "No transaction types yet." + Add button |
+| `hasPrevious=false` / `hasNext=false` | Previous / Next disabled |
+| 404 `TYPE_NOT_FOUND` on E2 | S3 not-found state "No transaction type with code {code}." + Create it |
+| 404 on E4/E5 | error alert with server `message`; S1 reloads current page |
+| 409 `TYPE_ALREADY_EXISTS` | S2 field error on Type code + link to S3 |
+| 409 `RECORD_LOCKED` | error alert; row stays in edit mode for retry |
+| 409 `HAS_DEPENDENT_RECORDS` | error alert "Please delete associated child records first."; row unchanged |
+| 422 `NO_CHANGES` | error alert with server `message` |
+| 400 `VALIDATION_FAILED` | field errors under each field from `errors`; focus first invalid field |
+| 401 | redirect to sign-in (or dev bypass) — "Sign in to continue." |
+| 403 | full-page message "You do not have permission to maintain transaction types." |
+| 503 `DB_UNAVAILABLE` | error alert "The service is temporarily unavailable. Try again later."; actions stay enabled for retry |
+| 500 `INTERNAL_ERROR` | error alert "Something went wrong. Reference: {traceId}." |
+| Network failure (no response) | error alert "Cannot reach the service. Check your connection and try again." (UI-only state, no backend counterpart needed) |
+
+No orphans: every backend code has a UI presentation and every UI error state has a trigger.
 
 ## 7. Cross-Cutting Alignment
-- **Security**: OAuth 2.0 + JWT tokens are attached as Bearer tokens in API requests by the frontend. The backend validates tokens and scopes. TLS 1.3 is enforced.
-- **Privacy/GDPR**: Reference data only. No PII exists in this transaction group, so masking is not required.
-- **Accessibility**: UI relies on backend's consistent `code` to map errors to specific fields and announce them via ARIA live regions. Backend provides identifier-free, user-safe `message`s.
-- **State**: Backend is fully stateless REST. Frontend handles pagination state (cursors, direction) and UI states.
+- **OAuth 2.0 / JWT:** the UI API client attaches `Authorization: Bearer <token>` to every `/api/v1` call; token kept in memory. In local dev with `VITE_AUTH_BYPASS=true` the client sends `dummy-dev-token`, accepted by the backend only in Development with `Auth:DevBypass=true`.
+- **TLS 1.3:** terminated at Kestrel (non-dev) or the API gateway; the dev proxy uses HTTP on localhost only.
+- **OWASP:** server-side validation on every write regardless of UI checks; parameterised queries; ProblemDetails without stack traces; CORS limited to `http://localhost:5173` in dev.
+- **GDPR:** no personal data on either side; backend audit log holds only the admin `sub`.
+- **WCAG:** backend `code`/`message`/`errors` feed the UI's `role="alert"` and field `aria-describedby` messages.
 
 ## 8. Gaps & Resolutions for a Fully Functional Screen
 | # | Area | Gap / Inconsistency | Resolution (or Needs From User) |
 |---|---|---|---|
-| 1 | Authorization | Role switching (`CDEMO-USRTYP-ADMIN` vs `USER`) was inferred in UI but handled via JWT roles in Backend. | Backend enforces `TXN_TYPE_ADMIN` scope for E3/E4/E5. Frontend relies on token claims to show/hide write actions. |
-| 2 | Routing | Add New button on List screen routes to Screen 2, but UI spec is ambiguous on path vs modal. | Adopt route `/maintenance/add` which renders the Details component in a explicit "Create New" state. |
-| 3 | Filter Validation | UI allows alphanumeric for Type Code filter, but backend (V1) requires exactly 2 digits. | UI must align with backend to restrict type code to numeric, exactly 2 digits, to prevent early 400s. |
-| 4 | No-Change Guard | Backend returns `TXN_TYPE_NO_CHANGE` (200), UI needs to know if toast should show. | Frontend uses the `changed` boolean flag in the JSON response to suppress the success toast if no change occurred. |
+| G1 | Navigation | "Back to admin menu" targets MG-02, not built yet | Link to placeholder `/admin` route showing "Admin menu is not available yet." until MG-02 |
+| G2 | Auth | No OAuth provider runs locally (`http://localhost:8081`) | Use dev bypass for local build/test; production realm, audience `carddemo-api`, role `carddemo.admin` and scopes need confirmation (Needs From User at Gate 2) |
+| G3 | Paging | Page number is client-held; deep links with `page>1` can't rebuild keyset position | Page in URL is informational; opening a URL with filters always starts at page 1 |
+| G4 | Upsert | Legacy save inserts when missing; target PUT returns 404 | Accept split (backend D1), or ask user at Gate 2 |
+| G5 | Concurrency | No optimistic concurrency (legacy parity) | Accept (backend D2), or add ETag at Gate 2 |
+| G6 | Child FK | 409 `HAS_DEPENDENT_RECORDS` cannot occur until `transaction_type_category` exists | Tested with a temporary child table in integration tests |
+| G7 | Session timeout | 15-minute idle timeout is a UI assumption | Confirm at Gate 2 |
 
 ## 9. Implementation Plan (Rewiring Front End & Back End)
-1. **Backend Endpoints**: Stand up endpoints E1-E5 and contracts in `.NET Core 9` within `TransactionTypeController`.
-2. **Security**: Configure OAuth 2.0 JWT validation in the backend (`SecurityConfig.cs`).
-3. **Frontend API Client**: Wire the frontend API client (`api-client.ts`) to backend endpoints, ensuring it attaches JWT bearer tokens and sets the correct Base URL.
-4. **List Screen Wiring**: Bind List Screen filters, data table, and pagination controls to E1.
-5. **Details Screen Wiring**: Bind Details Screen inputs and save/delete buttons to E2 (Find), E3 (Create), E4 (Update), and E5 (Delete).
-6. **Client Validations**: Implement client-side validations to strictly mirror V1, V4, and V5 rules.
-7. **Error Mapping**: Implement error handling in the frontend to map backend `code` properties to field-level alerts or global toasts.
-8. **Gap Resolutions**: Restrict type filter to numeric only, and process the `changed` flag for the no-change toast.
+1. **Backend:** create the solution and API project (backend spec §10); `CardDemoDbContext` mapped to `transaction_type`; repository (keyset queries, LIKE escaping, FOR UPDATE on update); service (rules R1–R25, error mapping); validators (§5); controller E1–E5 + `/health`; ProblemDetails middleware; JWT + dev-bypass auth; CORS; rate limiting. Verify with `curl` against the Phase 5 database.
+2. **Frontend API layer:** `transactionTypesApi.js` with `list`, `get`, `create`, `update`, `remove`; base `/api/v1`; bearer header; ProblemDetails → `{ status, code, message, errors }`.
+3. **Validation module** mirroring §5 messages.
+4. **Screens:** S1 list (filters, table, inline edit, paging, delete dialog), S2 add, S3 details/lookup/delete; router `/transaction-types`, `/transaction-types/new`, `/transaction-types/:typeCode`, `/` → `/transaction-types`, `/admin` placeholder.
+5. **States:** loading skeletons, empty, no-match, error alert, success status, confirmation dialogs.
+6. **Wiring check:** run each Action ↔ Endpoint row (§4) and each error row (§6) end to end through the Vite proxy.
+7. **Tests:** backend xUnit (validation, service, API integration on Postgres); frontend build + lint; Phase 8 BDD-based UI tests.
 
 ## 10. Build Acceptance Criteria
-- [ ] Backend E1-E5 implemented exactly to the request/response contracts and status codes.
-- [ ] Frontend API client configured with TLS 1.3 and JWT Bearer tokens.
-- [ ] List screen successfully fetches, filters, and paginates transaction types using E1.
-- [ ] Details screen successfully fetches (E2), creates (E3), updates (E4), and deletes (E5) transaction types.
-- [ ] Client presentation validations match backend V1-V8 rules.
-- [ ] Error messages correctly mapped and displayed based on backend `code`.
-- [ ] Cross-cutting security, data privacy, and accessibility mandates met.
+- [ ] Every field in §3 is bound and displays/saves correctly.
+- [ ] Every action in §4 calls the listed endpoint and handles the listed statuses.
+- [ ] Every rule in §5 is enforced on both sides with the same message.
+- [ ] Every path in §6 shows the listed UI state.
+- [ ] Seed data (01–07) lists, filters, edits, adds and deletes end to end through `http://localhost:5173` → `:5000` → Postgres `:5433`.
+- [ ] Dev bypass works only in Development; no secrets in the repo.
+- [ ] No legacy identifiers visible in the UI.
