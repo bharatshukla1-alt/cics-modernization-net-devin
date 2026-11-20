@@ -1,23 +1,31 @@
-# MG-01 — Transaction Type Maintenance: DB Status (2026-11-18)
+# MG-01 — Transaction Type Maintenance — DB Status
 
-## a. Target Database Reachability
-Dialect `postgresql` (`config/Config.md`). Host `localhost:5432`, database `carddemo`, reached via `tools/db-apply.mjs` — **Reachable**.
+**Trans Group:** MG-01 — CTLI / COTRTLIC, CTTU / COTRTUPC
+**Agents run:** Setup-DB only (no VSAM footprint, so Setup-VSAM was not dispatched)
 
-## b. DB2 Table Status
-| Target Table | Source DB2 Table | Status | Detail |
-|---|---|---|---|
-| transaction_type | CARDDEMO.TRANSACTION_TYPE | Present | `tr_type character NOT NULL PK`, `tr_description character varying NOT NULL`; 7 seed rows from `Input/ctl/DB2LTTYP.ctl` |
+## a. Target Database
+| Dialect | DB_NAME | Reachable |
+|---|---|---|
+| postgresql | carddemo | Yes (`--list-tables` succeeded) |
 
-## c. VSAM-derived Table Status
-None — MG-01 accesses no VSAM files.
+## b. DB2 Tables
+| Table | Status | Live check |
+|---|---|---|
+| TRANSACTION_TYPE | Present | `tr_type character(2) NOT NULL` (PK `transaction_type_pkey`), `tr_description character varying(50) NOT NULL`, unique index `xtran_type (tr_type)`. 7 seed rows. Matches `-DB-Details.md` section b. |
+
+## c. VSAM-Derived Tables
+Not applicable — this group's source has no VSAM footprint.
 
 ## d. Gaps by Criticality
+
 ### Critical
 None
+
 ### High
 None
+
 ### Medium
-- `GRANT ... ON CARDDEMO.TRANSACTION_TYPE TO PUBLIC` (Input/ctl/DB2CREAT.ctl) not applied; DBA to define role-based grants.
+- Table-level grant `DELETE, INSERT, SELECT, UPDATE ON CARDDEMO.TRANSACTION_TYPE TO PUBLIC` recorded but not provisioned. Source: `-DB-Details.md` Gaps (iii).
+
 ### Low
-- Seed value `'06','REVERAL'` carried verbatim from source (likely a typo of "REVERSAL"); confirm with business before changing.
-- `CREATE DATABASE CARDDEMO` replaced by the target database `carddemo` (Postgres folds unquoted names to lower case).
+- Source `CREATE DATABASE CARDDEMO` recorded for audit; target `carddemo` exists. Source: `-DB-Details.md` Gaps (ii).

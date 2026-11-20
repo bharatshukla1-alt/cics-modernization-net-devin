@@ -1,81 +1,42 @@
-# MG-01-Run-Guide.md
+# MG-01 — Run Guide (Transaction Type Maintenance)
 
 ## Overview
-This run guide provides the instructions to start the Transaction Type List and Maintenance Details screens locally. It launches the .NET Core 9 backend (`TransactionTypeService`), the React frontend, and connects to the Postgres database.
+Starts the Transaction Types screens: React + Tailwind (Vite) frontend → ASP.NET Core 9 Web API (C#) → PostgreSQL `carddemo`.
 
 ## Prerequisites
-Ensure the following tools and runtimes are installed on your local machine:
-- **Node.js**: (v18 or higher recommended) for running the React frontend.
-- **.NET SDK**: v9.0 for running the C# backend.
-- **Postgres Database**: Running locally or accessible via network.
-- **Placeholders**: You must supply the following values before starting:
-  - `<DB_PASSWORD>`: Your Postgres database password.
-  - `<OAUTH_ISSUER>`: The URL of your OAuth 2.0 Authorization Server (e.g., Keycloak, Auth0, or Azure AD).
+- .NET SDK 9.0 (`dotnet --version` → 9.x)
+- Node.js 20+ and npm
+- Docker (for the local PostgreSQL 15 container from Phase 5) or any PostgreSQL 15 instance
+- Values to supply: `<DB_PASSWORD>` for the `carddemo` user (local container: set when the container was created)
 
 ## Database
-The application requires the Postgres database to be running and seeded with the target schema.
-1. Confirm your Postgres instance is running.
-2. Ensure the `CARDDEMO` database exists.
-3. Verify that the `TRANSACTION_TYPE` table has been created and seeded with initial reference data (this should have been provisioned by the earlier Database migration phase). No specific DDL commands need to be run here if the database is already prepared.
+1. Start the Phase 5 container if it is stopped: `docker start cics-mg-postgres` (listens on `127.0.0.1:5433`).
+2. Check the schema: from `cics-modernization/`, with `DB_HOST=127.0.0.1 DB_PORT=5433 DB_NAME=carddemo DB_USER=carddemo DB_PASSWORD=<DB_PASSWORD>` exported, run `node tools/db-apply.mjs --dialect postgresql --list-tables` → `transaction_type` is listed.
+3. On a fresh database, provision with `node tools/db-apply.mjs --dialect postgresql --create-database` then `--sql-file Artefacts/DDL/MG-01-TransactionTypeMaintenance-schema.sql`.
 
 ## Backend
-The backend is a .NET Core 9 Web API service.
-1. Open a terminal and navigate to the backend API directory:
-   ```bash
-   cd target/MG-01/backend/TransactionTypeService/src/TransactionTypeService.Api
-   ```
-2. Configure the required environment variables. (You can set these in your shell or update `appsettings.Development.json`):
-   ```bash
-   export ConnectionStrings__DefaultConnection="Host=localhost;Database=CARDDEMO;Username=postgres;Password=<DB_PASSWORD>"
-   export Jwt__Issuer="<OAUTH_ISSUER>"
-   ```
-3. Start the backend service:
-   ```bash
-   dotnet run
-   ```
-4. The backend service will start and listen on port `5001`. The API base URL is: `https://localhost:5001/api/v1`
+1. `cd Target/MG-01/Backend/TransactionTypeService/src/TransactionTypeService.Api`
+2. Set environment:
+   - `ConnectionStrings__CardDemo="Host=127.0.0.1;Port=5433;Database=carddemo;Username=carddemo;Password=<DB_PASSWORD>"`
+   - `ASPNETCORE_ENVIRONMENT=Development`
+   - `Auth__DevBypass=true` (local only, accepts `dummy-dev-token`)
+   - `ASPNETCORE_URLS=http://localhost:5000`
+3. `dotnet run` → API at `http://localhost:5000`, health at `http://localhost:5000/health`.
 
 ## Frontend
-The frontend is a React SPA using Vite (or similar dev server).
-1. Open a new terminal window and navigate to the frontend directory:
-   ```bash
-   cd target/MG-01/frontend
-   ```
-2. Create or update the `.env.local` file with the configuration to point to the backend and auth server:
-   ```env
-   VITE_API_BASE_URL=https://localhost:5001/api/v1
-   VITE_AUTH_DOMAIN=<OAUTH_ISSUER>
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the frontend development server:
-   ```bash
-   npm run dev
-   ```
-5. The frontend will start and typically serve on `http://localhost:5173`.
+1. `cd Target/MG-01/Frontend`
+2. `cp .env.example .env` and keep `VITE_AUTH_BYPASS=true`, `VITE_API_BASE=/api/v1`.
+3. `npm install`
+4. `npm run dev` → `http://localhost:5173` (Vite proxies `/api` → `http://localhost:5000`).
 
 ## Verify the screen
-1. Open a web browser and navigate to the frontend URL (e.g., `http://localhost:5173`).
-2. If prompted by the application, log in using your OAuth credentials (ensure your test user has the administrative role mapped to `TXN_TYPE_ADMIN`).
-3. Navigate to the **Transaction Type List** screen (e.g., `/maintenance`).
-4. Verify the screen loads and displays the seeded transaction types in the data table.
-5. Perform a primary action round-trip: Click the "Edit" button on a row, change the description slightly, and click "Save". Verify a success message is shown and the change is reflected in the list.
+1. Open `http://localhost:5173/transaction-types` — seed codes 01–07 are listed (no login needed with dev bypass).
+2. Search Type code `05` → only REFUND is shown.
+3. Click Edit on 05, change the description, Save → "Transaction type 05 updated." and the new text persists after reload.
 
 ## Start/Stop order & Troubleshooting
-### Start Order
-1. **Database**: Postgres must be running and accessible.
-2. **Backend**: Start the .NET Core API so it can connect to the DB and serve the frontend.
-3. **Frontend**: Start the React app last so it can consume the API.
-
-### Stop Order
-- Stop the Frontend (`Ctrl+C` in the frontend terminal).
-- Stop the Backend (`Ctrl+C` in the backend terminal).
-- Stop the Database (if running locally/via Docker).
-
-### Troubleshooting
-- **Port already in use**: If `5001` or `5173` is occupied, change the port using `dotnet run --urls=https://localhost:<NEW_PORT>` or Vite's port flag, and update `.env.local` accordingly.
-- **Database not reachable (503 Error)**: If the UI shows "The service is temporarily unavailable", double-check the `ConnectionStrings__DefaultConnection` environment variable, ensuring the Host, Port, Username, and `<DB_PASSWORD>` are correct.
-- **CORS Errors / Network Failures**: Ensure the backend's CORS policy is configured to allow requests from the frontend's origin (`http://localhost:5173`). Check the browser console for details.
-- **401/403 Auth Errors**: Verify that your OAuth token is valid and hasn't expired. Ensure the `<OAUTH_ISSUER>` matches exactly between the frontend `.env.local` and backend environment variables.
+- Start: database → backend → frontend. Stop: Ctrl+C the Vite and `dotnet run` processes; `docker stop cics-mg-postgres`.
+- **Port in use (5000/5173/5433):** `lsof -i :5000` and stop the other process, or change `ASPNETCORE_URLS` / Vite `server.port` and the proxy target together.
+- **503 / DB not reachable:** container not running or wrong password in `ConnectionStrings__CardDemo`; check `/health`.
+- **401 in the UI:** backend not in Development or `Auth__DevBypass` not set while the UI sends `dummy-dev-token`.
+- **CORS error:** call the API through the Vite proxy (`/api/...`), not `http://localhost:5000` directly from the browser.

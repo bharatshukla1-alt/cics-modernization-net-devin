@@ -1,61 +1,72 @@
-# MG-01 — Refactor Test Result (2026-11-18)
+# MG-01 — Refactor Test Result
 
 ## 1. Run Metadata
-| Item | Value |
-|---|---|
-| Tran Group | `MG-01` — Transaction type maintenance (CTLI/COTRTLIC, CTTU/COTRTUPC) |
-| Target under test | ASP.NET Core Web API (.NET 9.0.321) `Target/MG-01/Backend/TransactionTypeService/src/TransactionTypeService.Api` · React/Vite SPA `Target/MG-01/Frontend` |
-| Database | PostgreSQL 16 (docker), database `carddemo`, table `transaction_type`, 7 seed rows from `Input/ctl/DB2LTTYP.ctl` |
-| Backend URL | `http://localhost:5080`, REST base `/api/v1/transaction-types`, health `/health` |
-| Context | `Artefacts/Specs/Refactor/MG-01-*-Spec.md`, `Artefacts/Architecture/MG-01.Architecture.md`, `Artefacts/QA/Test Case/MG-01-Refactor-TestCase.md` |
+- **Tran Group:** MG-01 — Transaction type maintenance (Db2) — list, filter, add, update, delete
+- **Test-case document:** `Artefacts/QA/Test Case/MG-01-Refactor-TestCase.md` (74 cases)
+- **Target exercised:** UI `http://localhost:5173` (Vite, React), API via proxy `http://localhost:5173/api/v1` → ASP.NET Core 9 on `http://localhost:5000` (Development, dev-bypass token), PostgreSQL 15 `carddemo` on `127.0.0.1:5433`
+- **Method:** API cases driven with HTTP calls and DB state checked directly with `psql`; UI cases driven in Chrome (Playwright over CDP). Test rows use codes 90–99 and are cleaned after every case; seed restored.
+- **Date:** 2026-11-20
 
-The previous version of this file described a Java 21 / Spring Boot target that is not in this repository; it was replaced by this run (see git history).
+## 2. Result Summary (run 1)
+| # | Test Scenario | Cases | Passed | Failed | Blocked | Result (Pass/Fail) |
+|---|---|---|---|---|---|---|
+| 1 | FE Functional Equivalence | 8 | 8 | 0 | 0 | Pass |
+| 2 | HP Happy Path | 8 | 8 | 0 | 0 | Pass |
+| 3 | AUTHN Authentication | 3 | 3 | 0 | 0 | Pass |
+| 4 | AUTHZ Authorization | 2 | 0 | 0 | 2 | Blocked |
+| 5 | FV Field Validation | 9 | 9 | 0 | 0 | Pass |
+| 6 | BR Business Rules | 6 | 6 | 0 | 0 | Pass |
+| 7 | DB Side Effects | 4 | 4 | 0 | 0 | Pass |
+| 8 | CON Concurrency | 4 | 4 | 0 | 0 | Pass |
+| 9 | TX Transaction Integrity | 2 | 2 | 0 | 0 | Pass |
+| 10 | HTTP Semantics | 8 | 8 | 0 | 0 | Pass |
+| 11 | UI Rendering | 8 | 7 | 1 | 0 | Fail |
+| 12 | PSF Pagination/Filter | 6 | 6 | 0 | 0 | Pass |
+| 13 | BND Boundary | 6 | 6 | 0 | 0 | Pass |
 
-## 2. Result Summary
-| # | Scenario | Cases | Passed | Failed | Blocked |
-|---|---|---|---|---|---|
-| 1 | Backend unit tests (xUnit, `Tests/TransactionTypeService.Tests.csproj`) | 15 | 15 | 0 | 0 |
-| 2 | API functional equivalence vs Postgres (curl, auth disabled run) | 14 | 14 | 0 | 0 |
-| 3 | Authentication guard (auth enabled run) | 4 | 4 | 0 | 0 |
-| 4 | Frontend build + lint (`vite build`, `eslint .`) | 2 | 2 | 0 | 0 |
-| 5 | Screen-level E2E (Playwright) | — | — | — | All |
+## 3. Overall Verdict
+Run 1: 74 cases — 71 passed, 1 failed, 2 blocked (pass rate of executed cases 98.6%). **Run 1 verdict: FAIL** (UI-005).
+After the fix (Section 7), run 2 re-executed all 72 runnable cases: **72 passed, 0 failed, 2 blocked → PASS.**
 
-## 3. API Functional Equivalence (Postgres)
-| Case | Request | Expected (legacy behaviour) | Actual |
+## 4. Failed Scenarios
+> **MG01-UI-005 — Field errors shown on add**
+> - Input: open Add screen, click Create with both fields empty
+> - Expected: messages under both fields · Actual: only "Type code is required." shown; description error missing ❌
+> - Evidence: `Target/MG-01/Frontend/src/screens/TransactionTypeAddPage.jsx` — the auto-focused Type code field's `onBlur` validation inserted an error line, shifting the layout during the click so the form submit never fired.
+> - Severity: Medium (validation feedback incomplete; no data risk)
+
+## 5. Message-Intent Equivalences
+| Case | Expected (legacy) | Actual (target) | Why equivalent |
 |---|---|---|---|
-| E6 health | GET /health | DB reachable | 200 Healthy |
-| E1 first page | GET list | 7 rows ascending from 01, no previous page (CA-FIRST-PAGE) | 200, 01–07 |
-| E1 description filter | `?description=pay` | case-insensitive LIKE | 200, 02 PAYMENT |
-| E1 invalid filter | `?typeCode=A1` | "Type code must be a 2-digit number" | 400 INVALID_TYPE_CODE_FILTER |
-| E2 read | GET /03 | CREDIT | 200 |
-| E2 not found | GET /55 | SQLCODE +100 message | 404 TXN_TYPE_NOT_FOUND |
-| E3 insert | POST 08 FEE | row added | 201 |
-| E3 duplicate | POST 08 again | SQLCODE -803 | 409 TXN_TYPE_ALREADY_EXISTS |
-| E1 forward paging | `?cursor=07&direction=forward` | next page with previous enabled | 200, 08, hasPrevious=true |
-| E4 no change | PUT /08 "fee" | "No change detected" (case-insensitive compare) | 200 TXN_TYPE_NO_CHANGE |
-| E4 update | PUT /08 "SERVICE FEE" | row updated | 200 changed=true |
-| E4 concurrent delete | PUT /77 | record removed by someone else | 409 TXN_TYPE_CONCURRENTLY_DELETED |
-| E5 delete | DELETE /08 | row deleted | 204 |
-| E5 delete again | DELETE /08 | not found | 404 |
-
-Final row count after the run: 7 (fixtures cleaned up).
-
-## 4. Authentication Guard
-| Case | Expected | Actual |
-|---|---|---|
-| GET list without token | 401 | 401 |
-| DELETE without token | 401 | 401 |
-| GET list with malformed bearer token | 401 | 401 |
-| GET /health anonymous | 200 | 200 |
-
-## 5. Bugs Found and Fixed
-| ID | Defect | Fix |
-|---|---|---|
-| BUG-01 | API used EF in-memory store; Postgres never used | `Program.cs` uses Npgsql when `ConnectionStrings:DefaultConnection` is set |
-| BUG-02 | EF mapping `TRANSACTION_TYPE`/`TR_TYPE` quoted upper-case, does not match Postgres lower-case DDL | Mapped to `transaction_type`, `tr_type`, `tr_description` |
-| BUG-03 | `Database=CARDDEMO` in appsettings (Postgres database is `carddemo`) | Corrected |
-| BUG-04 | Root `TransactionTypeService.csproj`/`Program.cs` was the weather-forecast template and globbed `src/` | Removed |
-| BUG-05 | `Tests/TransactionTypeServiceTests.cs` had no project and only placeholder asserts | Added xUnit project with 15 service tests |
+| FV-001 | `TYPE CODE FILTER,IF SUPPLIED MUST BE A 2 DIGIT NUMBER` | `Type code must be a 2-digit number.` | same rule and 2-digit constraint |
+| FV-002 | `Tran Type code must be supplied.` | `Type code is required.` | same trigger (required), same outcome |
+| FV-005 / BND-003 | `Transaction Desc must be supplied.` | `Description is required.` | same trigger |
+| FV-006 | `Transaction Desc can have numbers or alphabets only.` | `Description can contain only letters, numbers and spaces.` | same rule (spaces also allowed in legacy) |
+| HP-007 / UI-006 | `No record found for this key in database` | `No transaction type with code 12.` | same not-found event |
+| BR-001 | `No Records found for these filter conditions` | `No transaction types match these filters.` | same event |
+| CON-002 | `Record not found. Deleted by others ?` | `Transaction type 94 was not found. It may have been deleted by someone else.` | same event and cause |
+| CON-003 | `Deadlock. Someone else updating ?` | `The record is being changed by someone else. Try again.` | same event, retry possible |
+| TX-001 | `Please delete associated child records first:` | `Please delete associated child records first.` | same |
+| HTTP-008 | `Db2 access failure.` | `The service is temporarily unavailable. Try again later.` | same outcome (DB unavailable) |
 
 ## 6. Blocked / Not Run
-- Screen-level Playwright cases (UI-Spec §3–§10): no Keycloak realm/client definition is in the repo (`carddemo` realm, `mg01-frontend` client), so an authenticated browser session could not be created. Authenticated API calls with `TXN_TYPE_ADMIN`/`TXN_TYPE_READ` were likewise not exercised.
+| Case ID(s) | Reason | What is needed to run it |
+|---|---|---|
+| AUTHZ-001, AUTHZ-002 | No OAuth provider is running locally (`http://localhost:8081`), so no token for an authenticated non-admin user can be issued; the dev-bypass token is always admin | A running identity provider (realm/client per Gate 2 GH-5) issuing a token without role `carddemo.admin`. Policy code is in place (`Security/AuthorizationPolicies.cs`). |
+
+## 7. Environment & Notes
+- Services confirmed up before the run (`/health` 200, UI 200).
+- HTTP-008 stopped the Postgres container for one request and restarted it.
+- UI-007 moved the seed rows to a backup table for the empty-table check and restored them.
+- **Bug fix (test-bug-fix, self-fix mode):** UI-005 fixed in `TransactionTypeAddPage.jsx` and `TransactionTypeDetailPage.jsx`. The blur validation now skips when focus moves to the submit button (`e.relatedTarget?.type === 'submit'`), so a submit always validates every field. Lint and build pass. Re-run: all 72 runnable cases pass.
+- No test data left behind; seed rows 01–07 unchanged.
+
+## 8. Overall Scorecard
+| Metric | Run 1 | Run 2 (after fix) |
+|---|---|---|
+| Total cases | 74 | 74 |
+| Passed | 71 | 72 |
+| Failed | 1 | 0 |
+| Blocked | 2 | 2 |
+| Pass rate (executed) | 98.6% | 100% |
+| Verdict | FAIL | PASS |
