@@ -113,7 +113,6 @@ To work with this repository effectively:
 
 This repository currently contains generated and vendored content, including target application outputs and adapter code. Changes to repository-level workflow behavior should generally be made in:
 
-- `CLAUDE.md`
 - `.devin/playbooks/`
 - `.devin/agents/`
 - `config/Config.md`
